@@ -1,39 +1,39 @@
 {
-  "upstreamUri": {
-    "tag": "env",
-    "name": "UPSTREAM_URI"
-  },
-  "cvrDbUri": {
-    "tag": "env",
-    "name": "CVR_DB_URI"
-  },
-  "changeDbUri": {
-    "tag": "env",
-    "name": "CHANGE_DB_URI"
-  },
-  "replicaDbFile": {
-    "tag": "env",
-    "name": "REPLICA_DB_FILE"
-  },
-  "jwtSecret": {
-    "tag": "env",
-    "name": "JWT_SECRET"
-  },
-  "litestream": {
-    "tag": "env",
-    "name": "LITESTREAM"
-  },
-  "shard": {
-    "id": {
-      "tag": "env",
-      "name": "SHARD_ID"
-    },
-    "publications": {
-      "tag": "env",
-      "name": "PUBLICATIONS"
-    }
-  },
-  "log": {
-    "level": "debug"
-  }
+	"changeDBConnStr": {
+		"name": "CHANGE_DB_URI",
+		"tag": "env"
+	},
+	"cvrDBConnStr": {
+		"name": "CVR_DB_URI",
+		"tag": "env"
+	},
+	"jwtSecret": {
+		"name": "JWT_SECRET",
+		"tag": "env"
+	},
+	"litestream": {
+		"name": "LITESTREAM",
+		"tag": "env"
+	},
+	"log": {
+		"level": "debug"
+	},
+	"replicaDBFile": {
+		"name": "REPLICA_DB_FILE",
+		"tag": "env"
+	},
+	"shard": {
+		"id": {
+			"name": "SHARD_ID",
+			"tag": "env"
+		},
+		"publications": {
+			"name": "PUBLICATIONS",
+			"tag": "env"
+		}
+	},
+	"upstreamDBConnStr": {
+		"name": "UPSTREAM_URI",
+		"tag": "env"
+	}
 }

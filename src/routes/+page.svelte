@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Query } from '$lib/query.svelte';
+	import { Query } from '$lib/Query.svelte.js';
 	import { z } from '../zero-schema.js';
 
 	const todos = new Query(z.query.todo);

@@ -4,8 +4,6 @@ Zero is the local first platform for building incedible, super fast apps.
 
 To use Zero Svelte, you need to follow the Zero docs to get started.
 
-## Install
-
 ## Usage
 
 1. Follow LINK_TO_ZERO_DOCS to get started with Zero
@@ -40,6 +38,8 @@ Mutations & queries are done with just standard Zero.
 ```javascript
 z.mutate.todo.update({ id, completed });
 ```
+
+See demo for real working code.
 
 See Zero docs for more info.
 

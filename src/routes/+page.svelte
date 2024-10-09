@@ -6,7 +6,7 @@
 
 	const randID = () => Math.random().toString(36).slice(2);
 
-	function addTodo(event: Event) {
+	function onsubmit(event: Event) {
 		event.preventDefault();
 		const formData = new FormData(event.target as HTMLFormElement);
 		const newTodo = formData.get('newTodo') as string;
@@ -25,13 +25,9 @@
 	}
 </script>
 
-<!-- Thoughts -->
-<!-- Auth patterns? -->
-<!-- Access control? -->
-
 <div>
 	<h1>Todo</h1>
-	<form onsubmit={addTodo}>
+	<form {onsubmit}>
 		<input type="text" id="newTodo" name="newTodo" />
 		<button type="submit">Add</button>
 	</form>

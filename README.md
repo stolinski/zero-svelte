@@ -9,7 +9,7 @@ To use Zero Svelte, you need to follow the Zero docs to get started.
 ## Usage
 
 1. Follow LINK_TO_ZERO_DOCS to get started with Zero
-1. Install
+1. Install `npm install zero-svelte`
 1. Update vite.config.ts to have target 'es2022'.
 
 ```
@@ -42,3 +42,5 @@ z.mutate.todo.update({ id, completed });
 ```
 
 See Zero docs for more info.
+
+Listen to [Syntax](Syntax.fm) for tasty web development treats.

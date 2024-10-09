@@ -36,7 +36,7 @@
 		<button type="submit">Add</button>
 	</form>
 	<ul>
-		{#each todos?.data as todo}
+		{#each todos.data as todo}
 			<li>
 				<input
 					type="checkbox"

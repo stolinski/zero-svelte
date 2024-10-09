@@ -1,0 +1,39 @@
+{
+  "upstreamUri": {
+    "tag": "env",
+    "name": "UPSTREAM_URI"
+  },
+  "cvrDbUri": {
+    "tag": "env",
+    "name": "CVR_DB_URI"
+  },
+  "changeDbUri": {
+    "tag": "env",
+    "name": "CHANGE_DB_URI"
+  },
+  "replicaDbFile": {
+    "tag": "env",
+    "name": "REPLICA_DB_FILE"
+  },
+  "jwtSecret": {
+    "tag": "env",
+    "name": "JWT_SECRET"
+  },
+  "litestream": {
+    "tag": "env",
+    "name": "LITESTREAM"
+  },
+  "shard": {
+    "id": {
+      "tag": "env",
+      "name": "SHARD_ID"
+    },
+    "publications": {
+      "tag": "env",
+      "name": "PUBLICATIONS"
+    }
+  },
+  "log": {
+    "level": "debug"
+  }
+}

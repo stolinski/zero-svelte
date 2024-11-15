@@ -2,6 +2,7 @@ import type { Query as QueryParam, QueryImpl, QueryType, Smash } from '@rocicorp
 import type { TableSchema } from '@rocicorp/zero/schema';
 
 // Editors Note:
+// The factory version is probably the way to go in the future, but this is working for now given what is in Zero.
 // There is a lot of casting going on here. Much of which is based on zero-react.
 // If you can solve some of these issues, please PR, but since it's how the Zero team is doing it
 // I'm ok with it.

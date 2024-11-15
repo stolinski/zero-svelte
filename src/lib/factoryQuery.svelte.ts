@@ -3,6 +3,8 @@ import type { Change, Entry, Format, Input, Output, View } from '@rocicorp/zero/
 import type { TableSchema } from '@rocicorp/zero/schema';
 
 // Editors Note:
+// This is a bit sloppy due to unreleased items in the Zero monorepo. /zero/advanced is not avail outside the monorepo just yet.
+// Same with many of the utility function that are defined in the mono, I've just copied them here for now.
 // There is a lot of casting going on here. Much of which is based on zero-solid.
 // If you can solve some of these issues, please PR, but since it's how the Zero team is doing it
 // I'm ok with it.

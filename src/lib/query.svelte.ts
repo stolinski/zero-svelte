@@ -19,12 +19,18 @@ export class Query<TSchema extends TableSchema, TReturn extends QueryType> {
 		this.#queryImpl = q as unknown as QueryImpl<TSchema, TReturn>;
 		this.data = (this.#queryImpl.singular ? undefined : []) as unknown as Smash<TReturn>;
 
-		const view: QueryImpl<TSchema, TReturn> = this.#queryImpl.materialize();
-		const unsubscribe = view.addListener((snap) => {
-			this.data = (snap === undefined ? snap : $state.snapshot(snap)) as Smash<TReturn>;
-			if (this.#onChangeCallback) {
-				this.#onChangeCallback(this.data);
-			}
+		// Without this effect, the query will not update on page change, just full reload. TBH not sure why, but I'm sure the is a obvious reason.
+		$effect(() => {
+			const view: QueryImpl<TSchema, TReturn> = this.#queryImpl.materialize();
+			const unsubscribe = view.addListener((snap) => {
+				this.data = (snap === undefined ? snap : $state.snapshot(snap)) as Smash<TReturn>;
+				if (this.#onChangeCallback) {
+					this.#onChangeCallback(this.data);
+				}
+			});
+			return () => {
+				unsubscribe();
+			};
 		});
 
 		this.data = (this.#queryImpl.singular ? undefined : []) as unknown as Smash<TReturn>;

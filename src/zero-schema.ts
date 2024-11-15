@@ -1,3 +1,7 @@
+// NOTE:
+// You need your db to exist that matches this schema.
+// I  don't have migration code in this repo, feel free to add
+
 import { PUBLIC_SERVER } from '$env/static/public';
 import { Zero } from '@rocicorp/zero';
 

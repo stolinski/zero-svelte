@@ -4,6 +4,9 @@ import type { TableSchema } from '@rocicorp/zero/schema';
 
 // Editors Note:
 // This is a bit sloppy due to unreleased items in the Zero monorepo. /zero/advanced is not avail outside the monorepo just yet.
+// Also, I need to rethink this overall. It's based off of zero-solid, but I couldn't find a 1to1 replacement for everything.
+// ! Currently this loads data after a page change, but sometimes doesn't load on refresh. Probably something related to removing the $effect.
+// ! With the effect, you get infinite loops. I'm sure there is an obvious solution, I haven't had a min to dive in.
 // Same with many of the utility function that are defined in the mono, I've just copied them here for now.
 // There is a lot of casting going on here. Much of which is based on zero-solid.
 // If you can solve some of these issues, please PR, but since it's how the Zero team is doing it

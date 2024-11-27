@@ -1,11 +1,7 @@
 import type { Query as QueryParam, QueryImpl, QueryType, Smash } from '@rocicorp/zero';
-import type { TableSchema } from '@rocicorp/zero/schema';
+import { type TableSchema } from '@rocicorp/zero/advanced';
 
 // Editors Note:
-// This was written for a previous version of Zero, types are not working for the current version.
-// This is probably because we should be using the factory version of Query.
-
-// The factory version is probably the way to go in the future, but this is working for now given what is in Zero.
 // There is a lot of casting going on here. Much of which is based on zero-react.
 // If you can solve some of these issues, please PR, but since it's how the Zero team is doing it
 // I'm ok with it.
@@ -22,7 +18,6 @@ export class Query<TSchema extends TableSchema, TReturn extends QueryType> {
 		this.#queryImpl = q as unknown as QueryImpl<TSchema, TReturn>;
 		this.data = (this.#queryImpl.singular ? undefined : []) as unknown as Smash<TReturn>;
 
-		// Without this effect, the query will not update on page change, just full reload. TBH not sure why, but I'm sure the is a obvious reason.
 		$effect(() => {
 			const view: QueryImpl<TSchema, TReturn> = this.#queryImpl.materialize();
 			const unsubscribe = view.addListener((snap) => {

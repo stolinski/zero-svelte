@@ -1,8 +1,15 @@
 <script lang="ts">
+	import { PUBLIC_SERVER } from '$env/static/public';
 	import { Query } from '$lib/Query.svelte.js';
-	import { z } from '../zero-schema.js';
+	import { Z } from '$lib/Z.svelte.js';
+	import { schema, type Schema } from '../zero-schema.js';
+	const z = new Z<Schema>({
+		server: PUBLIC_SERVER,
+		schema,
+		userID: 'anon'
+	});
 
-	const todos = new Query(z.query.todo);
+	const todos = new Query(z.current.query.todo);
 
 	const randID = () => Math.random().toString(36).slice(2);
 
@@ -12,7 +19,7 @@
 		const newTodo = formData.get('newTodo') as string;
 		const id = randID();
 		if (newTodo) {
-			z.mutate.todo.create({ id, title: newTodo, completed: false });
+			z.current.mutate.todo.insert({ id, title: newTodo, completed: false });
 			(event.target as HTMLFormElement).reset();
 		}
 	}
@@ -21,7 +28,7 @@
 		const checkbox = event.target as HTMLInputElement;
 		const id = checkbox.value;
 		const completed = checkbox.checked;
-		z.mutate.todo.update({ id, completed });
+		z.current.mutate.todo.update({ id, completed });
 	}
 </script>
 
@@ -32,7 +39,7 @@
 		<button type="submit">Add</button>
 	</form>
 	<ul>
-		{#each todos.data as todo}
+		{#each todos.current as todo}
 			<li>
 				<input
 					type="checkbox"

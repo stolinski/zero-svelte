@@ -10,7 +10,7 @@ import type {
 import { deepClone } from './shared/deep-clone';
 import type { Immutable } from './shared/immutable';
 import type { AdvancedQuery } from '@rocicorp/zero/advanced';
-import { get_cache } from './Z.svelte';
+import { getZ } from './Z.svelte';
 
 export type ResultType = 'unknown' | 'complete';
 
@@ -133,7 +133,7 @@ export class Query<TSchema extends TableSchema, TReturn extends QueryType> {
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
 		this.current = default_snapshot[0] as Smash<TReturn>;
 		this.details = default_snapshot[1];
-		const view = viewStore.getView(get_cache().current.userID, this.#query_impl, enabled);
+		const view = viewStore.getView(getZ().current.userID, this.#query_impl, enabled);
 		this.current = view.current[0];
 		this.details = view.current[1];
 		$effect(() => {

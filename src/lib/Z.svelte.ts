@@ -26,6 +26,6 @@ export class Z<TSchema extends Schema> {
 	}
 }
 
-export function get_cache() {
+export function getZ() {
 	return getContext<Z<Schema>>('z');
 }

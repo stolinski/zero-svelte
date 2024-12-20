@@ -29,14 +29,14 @@ export default defineConfig({
 ```
 <script lang="ts">
     import { PUBLIC_SERVER } from '$env/static/public';
-    import { Query } from '$lib/Query.svelte.js';
-    import { Z } from '$lib/Z.svelte.js';
+    import { Z, getZ, Query } from 'zero-svelte';
     import { schema, type Schema } from '../zero-schema.js';
-    const z = new Z<Schema>({
+    new Z<Schema>({
         server: PUBLIC_SERVER,
         schema,
         userID: 'anon'
     });
+		const z = getZ();
 
     const todos = new Query(z.current.query.todo);
 

@@ -2,7 +2,9 @@
 // You need your db to exist that matches this schema.
 // I  don't have migration code in this repo, feel free to add
 
-const todoSchema = {
+import { createSchema, createTableSchema } from '@rocicorp/zero';
+
+const todoSchema = createTableSchema({
 	tableName: 'todo',
 	columns: {
 		id: { type: 'string' },
@@ -11,13 +13,13 @@ const todoSchema = {
 	},
 	primaryKey: ['id'],
 	relationships: {}
-} as const;
+});
 
-export const schema = {
+export const schema = createSchema({
 	version: 1,
 	tables: {
 		todo: todoSchema
 	}
-} as const;
+});
 
 export type Schema = typeof schema;

@@ -1,12 +1,13 @@
 {
 	"name": "zero-svelte",
-	"version": "0.0.5",
+	"version": "0.0.10",
 	"publishConfig": {
 		"access": "restricted"
 	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
+		"dev:zero-cache": "zero-cache-dev -p src/zero-schema.ts",
 		"preview": "vite preview",
 		"package": "svelte-kit sync && svelte-package && publint",
 		"prepublishOnly": "npm run package",

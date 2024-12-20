@@ -6,7 +6,7 @@ To use Zero Svelte, you need to follow the Zero docs to get started.
 
 ## Usage
 
-1. Follow LINK_TO_ZERO_DOCS to get started with Zero
+1. Follow [ZERO DOCS](https://zero.rocicorp.dev/docs/introduction) to get started with Zero
 1. Install `npm install zero-svelte`
 1. Update vite.config.ts to have target 'es2022'.
 

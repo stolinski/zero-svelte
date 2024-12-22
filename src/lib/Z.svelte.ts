@@ -1,5 +1,4 @@
 import { Zero, type TableSchema, type ZeroOptions } from '@rocicorp/zero';
-import { getContext, setContext } from 'svelte';
 
 export type Schema = {
 	readonly version: number;
@@ -13,7 +12,6 @@ export class Z<TSchema extends Schema> {
 
 	constructor(z_options: ZeroOptions<TSchema>) {
 		this.build(z_options);
-		setContext('z', this);
 	}
 
 	build(z_options: ZeroOptions<TSchema>) {
@@ -24,8 +22,4 @@ export class Z<TSchema extends Schema> {
 	close() {
 		this.current.close();
 	}
-}
-
-export function getZ() {
-	return getContext<Z<Schema>>('z');
 }

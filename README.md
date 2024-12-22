@@ -26,17 +26,26 @@ export default defineConfig({
 
 3. Usage
 
+lib/z.svelte.ts (or whatever you'd like to name)
+
+```
+// Schema is imported from wherever your Schema type lives.
+// via export type Schema = typeof schema;
+
+export const z = new Z()<Schema> {
+		server: PUBLIC_SERVER,
+		schema,
+		userID: 'anon'
+		...
+	};
+```
+
 ```
 <script lang="ts">
     import { PUBLIC_SERVER } from '$env/static/public';
-    import { Z, getZ, Query } from 'zero-svelte';
+    import { Query } from 'zero-svelte';
+    import { Z } from '$lib/z.svelte'
     import { schema, type Schema } from '../zero-schema.js';
-    new Z<Schema>({
-        server: PUBLIC_SERVER,
-        schema,
-        userID: 'anon'
-    });
-		const z = getZ();
 
     const todos = new Query(z.current.query.todo);
 

@@ -10,7 +10,8 @@ import type {
 import { deepClone } from './shared/deep-clone';
 import type { Immutable } from './shared/immutable';
 import type { AdvancedQuery } from '@rocicorp/zero/advanced';
-import { getZ } from './Z.svelte';
+import { getContext } from 'svelte';
+import type { Schema, Z } from './Z.svelte.js';
 
 export type ResultType = 'unknown' | 'complete';
 
@@ -129,11 +130,13 @@ export class Query<TSchema extends TableSchema, TReturn extends QueryType> {
 	#query_impl: AdvancedQuery<TSchema, TReturn>;
 
 	constructor(query: QueryDef<TSchema, TReturn>, enabled: boolean = true) {
+		const z = getContext('z') as Z<Schema>;
+		const id = z?.current?.userID ? z?.current.userID : 'anon';
 		this.#query_impl = query as unknown as AdvancedQuery<TSchema, TReturn>;
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
 		this.current = default_snapshot[0] as Smash<TReturn>;
 		this.details = default_snapshot[1];
-		const view = viewStore.getView(getZ().current.userID, this.#query_impl, enabled);
+		const view = viewStore.getView(id, this.#query_impl, enabled);
 		this.current = view.current[0];
 		this.details = view.current[1];
 		$effect(() => {

@@ -4,6 +4,11 @@ Zero is the local first platform for building incedible, super fast apps.
 
 To use Zero Svelte, you need to follow the Zero docs to get started.
 
+Watch this
+[Zero Sync Makes Local First Easy](https://www.youtube.com/watch?v=hAxdOUgjctk&ab_channel=Syntax)
+
+[<img src="./zero1.png">](https://www.youtube.com/watch?v=hAxdOUgjctk&ab_channel=Syntax)
+
 ## Usage
 
 1. Follow [ZERO DOCS](https://zero.rocicorp.dev/docs/introduction) to get started with Zero

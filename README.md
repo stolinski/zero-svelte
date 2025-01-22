@@ -34,25 +34,26 @@ export default defineConfig({
 lib/z.svelte.ts (or whatever you'd like to name)
 
 ```ts
-// Schema is imported from wherever your Schema type lives.
-// via export type Schema = typeof schema;
+// defined inside your .env file
+import { PUBLIC_SERVER } from '$env/static/public';
 
-export const z = new Z()<Schema> {
+// Schema is imported from wherever your Schema type lives.
+import { schema, type Schema } from '../zero-schema.js';
+
+export const z = new Z<Schema>({
 		server: PUBLIC_SERVER,
 		schema,
 		userID: 'anon'
 		...
-	};
+	});
 ```
 
 ```svelte
 <script lang="ts">
-    import { PUBLIC_SERVER } from '$env/static/public';
     import { Query } from 'zero-svelte';
     import { Z } from '$lib/z.svelte'
-    import { schema, type Schema } from '../zero-schema.js';
-
-    const todos = new Query(z.current.query.todo);
+    
+    const todos = new Query(z.query.todo);
 
     const randID = () => Math.random().toString(36).slice(2);
 

@@ -51,7 +51,7 @@ export const z = new Z<Schema>({
 ```svelte
 <script lang="ts">
     import { Query } from 'zero-svelte';
-    import { Z } from '$lib/z.svelte'
+    import { z } from '$lib/z.svelte'
     
     const todos = new Query(z.query.todo);
 

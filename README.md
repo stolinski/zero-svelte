@@ -15,7 +15,7 @@ Watch this
 1. Install `npm install zero-svelte`
 1. Update vite.config.ts to have target 'es2022'.
 
-```
+```ts
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
@@ -33,7 +33,7 @@ export default defineConfig({
 
 lib/z.svelte.ts (or whatever you'd like to name)
 
-```
+```ts
 // Schema is imported from wherever your Schema type lives.
 // via export type Schema = typeof schema;
 
@@ -45,7 +45,7 @@ export const z = new Z()<Schema> {
 	};
 ```
 
-```
+```svelte
 <script lang="ts">
     import { PUBLIC_SERVER } from '$env/static/public';
     import { Query } from 'zero-svelte';

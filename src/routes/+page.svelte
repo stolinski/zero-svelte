@@ -9,7 +9,7 @@
 		userID: 'anon'
 	});
 
-	const todos = new Query(z.current.query.todo);
+	const todos = new Query(z.current.query.todo.related('type', (type) => type.name));
 
 	const randID = () => Math.random().toString(36).slice(2);
 
@@ -19,7 +19,7 @@
 		const newTodo = formData.get('newTodo') as string;
 		const id = randID();
 		if (newTodo) {
-			z.current.mutate.todo.insert({ id, title: newTodo, completed: false });
+			z.current.mutate.todo.insert({ id, title: newTodo, completed: false, type_id: '1' });
 			(event.target as HTMLFormElement).reset();
 		}
 	}
@@ -35,6 +35,7 @@
 <div>
 	<h1>Todo</h1>
 	<form {onsubmit}>
+		pnp
 		<input type="text" id="newTodo" name="newTodo" />
 		<button type="submit">Add</button>
 	</form>

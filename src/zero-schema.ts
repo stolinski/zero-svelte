@@ -4,21 +4,38 @@
 
 import { createSchema, createTableSchema } from '@rocicorp/zero';
 
+const typeSchema = createTableSchema({
+	tableName: 'type',
+	columns: {
+		id: { type: 'string' },
+		name: { type: 'string' }
+	},
+	primaryKey: ['id']
+});
+
 const todoSchema = createTableSchema({
 	tableName: 'todo',
 	columns: {
 		id: { type: 'string' },
 		title: { type: 'string' },
-		completed: { type: 'boolean' }
+		completed: { type: 'boolean' },
+		type_id: { type: 'string' }
 	},
 	primaryKey: ['id'],
-	relationships: {}
+	relationships: {
+		type: {
+			sourceField: 'id',
+			destSchema: () => typeSchema,
+			destField: 'type'
+		}
+	}
 });
 
 export const schema = createSchema({
 	version: 1,
 	tables: {
-		todo: todoSchema
+		todo: todoSchema,
+		type: typeSchema
 	}
 });
 

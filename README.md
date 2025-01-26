@@ -36,20 +36,19 @@ lib/z.svelte.ts (or whatever you'd like to name)
 ```ts
 // Schema is imported from wherever your Schema type lives.
 // via export type Schema = typeof schema;
-
-export const z = new Z()<Schema> {
+export const z = new Z<Schema>({
 		server: PUBLIC_SERVER,
 		schema,
 		userID: 'anon'
 		...
-	};
+	});
 ```
 
 ```svelte
 <script lang="ts">
     import { PUBLIC_SERVER } from '$env/static/public';
     import { Query } from 'zero-svelte';
-    import { Z } from '$lib/z.svelte'
+    import { z } from '$lib/z.svelte'
     import { schema, type Schema } from '../zero-schema.js';
 
     const todos = new Query(z.current.query.todo);

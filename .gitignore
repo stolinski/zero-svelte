@@ -20,3 +20,7 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+#docker
+/docker
+/src/zerodb

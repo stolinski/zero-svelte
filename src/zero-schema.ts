@@ -2,41 +2,44 @@
 // You need your db to exist that matches this schema.
 // I  don't have migration code in this repo, feel free to add
 
-import { createSchema, createTableSchema } from '@rocicorp/zero';
+import {
+	createSchema,
+	relationships,
+	table,
+	string,
+	boolean,
+	definePermissions
+} from '@rocicorp/zero';
 
-const typeSchema = createTableSchema({
-	tableName: 'type',
-	columns: {
-		id: { type: 'string' },
-		name: { type: 'string' }
-	},
-	primaryKey: ['id']
-});
+const type = table('type')
+	.columns({
+		id: string(),
+		name: string()
+	})
+	.primaryKey('id');
 
-const todoSchema = createTableSchema({
-	tableName: 'todo',
-	columns: {
-		id: { type: 'string' },
-		title: { type: 'string' },
-		completed: { type: 'boolean' },
-		type_id: { type: 'string' }
-	},
-	primaryKey: ['id'],
-	relationships: {
-		type: {
-			sourceField: 'id',
-			destSchema: () => typeSchema,
-			destField: 'type'
-		}
-	}
-});
+const todo = table('todo')
+	.columns({
+		id: string(),
+		title: string(),
+		completed: boolean(),
+		type_id: string()
+	})
+	.primaryKey('id');
 
-export const schema = createSchema({
-	version: 1,
-	tables: {
-		todo: todoSchema,
-		type: typeSchema
-	}
+const todoRelationships = relationships(todo, ({ many }) => ({
+	type: many({
+		sourceField: ['type_id'],
+		destSchema: type,
+		destField: ['id']
+	})
+}));
+
+export const schema = createSchema(1, {
+	tables: [todo, type],
+	relationships: [todoRelationships]
 });
 
 export type Schema = typeof schema;
+
+export const permissions = definePermissions(schema, () => ({}));

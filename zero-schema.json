@@ -1,0 +1,70 @@
+{
+  "permissions": {},
+  "schema": {
+    "version": 1,
+    "tables": {
+      "todo": {
+        "name": "todo",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "title": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "completed": {
+            "type": "boolean",
+            "optional": false,
+            "customType": null
+          },
+          "type_id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "type": {
+        "name": "type",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "name": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      }
+    },
+    "relationships": {
+      "todo": {
+        "type": [
+          {
+            "sourceField": [
+              "type_id"
+            ],
+            "destField": [
+              "id"
+            ],
+            "destSchema": "type",
+            "cardinality": "many"
+          }
+        ]
+      }
+    }
+  }
+}

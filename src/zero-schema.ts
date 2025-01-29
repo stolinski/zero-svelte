@@ -1,7 +1,6 @@
 // NOTE:
 // You need your db to exist that matches this schema.
 // I  don't have migration code in this repo, feel free to add
-
 import {
 	createSchema,
 	relationships,
@@ -27,8 +26,8 @@ const todo = table('todo')
 	})
 	.primaryKey('id');
 
-const todoRelationships = relationships(todo, ({ many }) => ({
-	type: many({
+const todoRelationships = relationships(todo, ({ one }) => ({
+	type: one({
 		sourceField: ['type_id'],
 		destSchema: type,
 		destField: ['id']

@@ -1,10 +1,5 @@
 import { Zero, type Schema, type ZeroOptions } from '@rocicorp/zero';
 
-export type ZSchema = {
-	readonly version: number;
-	readonly tables: { readonly [table: string]: Schema };
-};
-
 // This is the state of the Zero instance
 // You can reset it on login or logout
 export class Z<TSchema extends Schema> {

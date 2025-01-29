@@ -61,7 +61,7 @@
               "id"
             ],
             "destSchema": "type",
-            "cardinality": "many"
+            "cardinality": "one"
           }
         ]
       }

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { PUBLIC_SERVER } from '$env/static/public';
-	import { Query } from '$lib/query.svelte';
-	import { Z } from '$lib/Z.svelte.js';
+	import { Z, Query } from '$lib/index.js';
 	import { schema, type Schema } from '../zero-schema.js';
+
 	const z = new Z<Schema>({
 		server: PUBLIC_SERVER,
 		schema,

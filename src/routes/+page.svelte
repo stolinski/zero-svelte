@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { PUBLIC_SERVER } from '$env/static/public';
-	import { Query } from '$lib/Query.svelte.js';
+	import { Query } from '$lib/query.svelte';
 	import { Z } from '$lib/Z.svelte.js';
 	import { schema, type Schema } from '../zero-schema.js';
 	const z = new Z<Schema>({
 		server: PUBLIC_SERVER,
 		schema,
-		userID: 'anon'
+		userID: 'anon',
+		kvStore: 'mem'
 	});
 
-	// const todos = new Query(z.current.query.todo.related('type', (type) => type.name));
 	const todos = new Query(z.current.query.todo.related('type'));
 
 	const randID = () => Math.random().toString(36).slice(2);

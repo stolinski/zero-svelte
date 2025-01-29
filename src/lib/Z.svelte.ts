@@ -1,8 +1,8 @@
-import { Zero, type TableSchema, type ZeroOptions } from '@rocicorp/zero';
+import { Zero, type Schema, type ZeroOptions } from '@rocicorp/zero';
 
-export type Schema = {
+export type ZSchema = {
 	readonly version: number;
-	readonly tables: { readonly [table: string]: TableSchema };
+	readonly tables: { readonly [table: string]: Schema };
 };
 
 // This is the state of the Zero instance

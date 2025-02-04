@@ -1,17 +1,10 @@
 import { createSubscriber } from 'svelte/reactivity';
-import type {
-	Query as QueryDef,
-	QueryType,
-	ReadonlyJSONValue,
-	Smash,
-	TableSchema,
-	TypedView
-} from '@rocicorp/zero';
-import { deepClone } from './shared/deep-clone';
-import type { Immutable } from './shared/immutable';
-import type { AdvancedQuery } from '@rocicorp/zero/advanced';
+import type { Query as QueryDef, ReadonlyJSONValue, Schema, TypedView } from '@rocicorp/zero';
+import { deepClone } from './shared/deep-clone.js';
+import type { Immutable } from './shared/immutable.js';
+import type { AdvancedQuery, HumanReadable } from '@rocicorp/zero/advanced';
 import { getContext } from 'svelte';
-import type { Schema, Z } from './Z.svelte.js';
+import type { Z } from './Z.svelte.js';
 
 export type ResultType = 'unknown' | 'complete';
 
@@ -19,7 +12,7 @@ export type QueryResultDetails = {
 	type: ResultType;
 };
 
-export type QueryResult<TReturn extends QueryType> = [Smash<TReturn>, QueryResultDetails];
+export type QueryResult<TReturn> = readonly [HumanReadable<TReturn>, QueryResultDetails];
 
 const emptyArray: unknown[] = [];
 const defaultSnapshots = {
@@ -27,18 +20,22 @@ const defaultSnapshots = {
 	plural: [emptyArray, { type: 'unknown' }] as const
 };
 
-function getDefaultSnapshot<TReturn extends QueryType>(singular: boolean): QueryResult<TReturn> {
+function getDefaultSnapshot<TReturn>(singular: boolean): QueryResult<TReturn> {
 	return (singular ? defaultSnapshots.singular : defaultSnapshots.plural) as QueryResult<TReturn>;
 }
 
-class ViewWrapper<TSchema extends TableSchema, TReturn extends QueryType> {
-	#view: TypedView<Smash<TReturn>> | undefined;
+class ViewWrapper<
+	TSchema extends Schema,
+	TTable extends keyof TSchema['tables'] & string,
+	TReturn
+> {
+	#view: TypedView<HumanReadable<TReturn>> | undefined;
 	#snapshot: QueryResult<TReturn>;
 	#subscribe: () => void;
 
 	constructor(
-		private query: QueryDef<TSchema, TReturn>,
-		private onMaterialized: (view: ViewWrapper<TSchema, TReturn>) => void,
+		private query: AdvancedQuery<TSchema, TTable, TReturn>,
+		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn>) => void,
 		private onDematerialized: () => void
 	) {
 		this.#snapshot = getDefaultSnapshot(query.format.singular);
@@ -62,9 +59,13 @@ class ViewWrapper<TSchema extends TableSchema, TReturn extends QueryType> {
 		});
 	}
 
-	#onData = (snap: Immutable<Smash<TReturn>>, resultType: ResultType, update: () => void) => {
+	#onData = (
+		snap: Immutable<HumanReadable<TReturn>>,
+		resultType: ResultType,
+		update: () => void
+	) => {
 		const data =
-			snap === undefined ? snap : (deepClone(snap as ReadonlyJSONValue) as Smash<TReturn>);
+			snap === undefined ? snap : (deepClone(snap as ReadonlyJSONValue) as HumanReadable<TReturn>);
 		this.#snapshot = [data, { type: resultType }] as QueryResult<TReturn>;
 		update(); // Notify Svelte that the data has changed
 	};
@@ -85,13 +86,14 @@ class ViewWrapper<TSchema extends TableSchema, TReturn extends QueryType> {
 }
 
 class ViewStore {
-	#views = new Map<string, ViewWrapper<any, any>>();
+	// eslint-disable-next-line
+	#views = new Map<string, ViewWrapper<any, any, any>>();
 
-	getView<TSchema extends TableSchema, TReturn extends QueryType>(
+	getView<TSchema extends Schema, TTable extends keyof TSchema['tables'] & string, TReturn>(
 		clientID: string,
-		query: AdvancedQuery<TSchema, TReturn>,
+		query: AdvancedQuery<TSchema, TTable, TReturn>,
 		enabled: boolean = true
-	): ViewWrapper<TSchema, TReturn> {
+	): ViewWrapper<TSchema, TTable, TReturn> {
 		if (!enabled) {
 			return new ViewWrapper(
 				query,
@@ -124,17 +126,21 @@ class ViewStore {
 
 export const viewStore = new ViewStore();
 
-export class Query<TSchema extends TableSchema, TReturn extends QueryType> {
-	current = $state<Smash<TReturn>>(null!);
+export class Query<
+	TSchema extends Schema,
+	TTable extends keyof TSchema['tables'] & string,
+	TReturn
+> {
+	current = $state<HumanReadable<TReturn>>(null!);
 	details = $state<QueryResultDetails>(null!);
-	#query_impl: AdvancedQuery<TSchema, TReturn>;
+	#query_impl: AdvancedQuery<TSchema, TTable, TReturn>;
 
-	constructor(query: QueryDef<TSchema, TReturn>, enabled: boolean = true) {
+	constructor(query: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
 		const z = getContext('z') as Z<Schema>;
 		const id = z?.current?.userID ? z?.current.userID : 'anon';
-		this.#query_impl = query as unknown as AdvancedQuery<TSchema, TReturn>;
+		this.#query_impl = query as unknown as AdvancedQuery<TSchema, TTable, TReturn>;
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
-		this.current = default_snapshot[0] as Smash<TReturn>;
+		this.current = default_snapshot[0] as HumanReadable<TReturn>;
 		this.details = default_snapshot[1];
 		const view = viewStore.getView(id, this.#query_impl, enabled);
 		this.current = view.current[0];

@@ -1,17 +1,19 @@
 {
 	"name": "zero-svelte",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
-		"dev:zero-cache": "zero-cache-dev -p src/zero-schema.ts",
+		"dev:zero-cache": "zero-cache-dev -p src/schema.ts",
 		"preview": "vite preview",
 		"package": "svelte-kit sync && svelte-package && publint",
 		"prepublishOnly": "npm run package",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"dev:db-up": "docker compose --env-file .env -f ./docker/docker-compose.yml up",
+		"dev:db-down": "docker compose --env-file .env -f ./docker/docker-compose.yml down"
 	},
 	"exports": {
 		".": {
@@ -30,27 +32,27 @@
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^4.0.0",
-		"@sveltejs/kit": "^2.16.1",
-		"@sveltejs/package": "^2.3.9",
+		"@sveltejs/kit": "^2.17.1",
+		"@sveltejs/package": "^2.3.10",
 		"@sveltejs/vite-plugin-svelte": "^5.0.3",
 		"@types/eslint": "^9.6.0",
-		"eslint": "^9.18.0",
+		"eslint": "^9.19.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^2.46.1",
 		"globals": "^15.14.0",
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"publint": "^0.3.2",
-		"svelte": "^5.19.2",
+		"svelte": "^5.19.7",
 		"svelte-check": "^4.1.4",
 		"typescript": "^5.7.3",
-		"typescript-eslint": "^8.21.0",
+		"typescript-eslint": "^8.23.0",
 		"vite": "^6.0.11"
 	},
 	"svelte": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"type": "module",
 	"dependencies": {
-		"@rocicorp/zero": "^0.11.2025011402"
+		"@rocicorp/zero": "^0.13.2025013101"
 	}
 }

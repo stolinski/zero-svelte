@@ -1,9 +1,4 @@
-import { Zero, type TableSchema, type ZeroOptions } from '@rocicorp/zero';
-
-export type Schema = {
-	readonly version: number;
-	readonly tables: { readonly [table: string]: TableSchema };
-};
+import { Zero, type Schema, type ZeroOptions } from '@rocicorp/zero';
 
 // This is the state of the Zero instance
 // You can reset it on login or logout

@@ -50,7 +50,7 @@ type AuthData = {
 
 export const permissions = definePermissions<AuthData, Schema>(schema, () => {
 	return {
-		issue: {
+		todo: {
 			row: {
 				delete: ANYONE_CAN,
 				insert: ANYONE_CAN

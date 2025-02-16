@@ -1,10 +1,12 @@
 import { createSubscriber } from 'svelte/reactivity';
 import type { Query as QueryDef, ReadonlyJSONValue, Schema, TypedView } from '@rocicorp/zero';
-import { deepClone } from './shared/deep-clone.js';
-import type { Immutable } from './shared/immutable.js';
+
 import type { AdvancedQuery, HumanReadable } from '@rocicorp/zero/advanced';
 import { getContext } from 'svelte';
 import type { Z } from './Z.svelte.js';
+
+// Not sure why, TS doesn't really want to allow the import using @rocicorp/zero directly
+import type { Immutable } from '../../node_modules/@rocicorp/zero/out/shared/src/immutable.d.ts';
 
 export type ResultType = 'unknown' | 'complete';
 
@@ -65,7 +67,7 @@ class ViewWrapper<
 		update: () => void
 	) => {
 		const data =
-			snap === undefined ? snap : (deepClone(snap as ReadonlyJSONValue) as HumanReadable<TReturn>);
+			snap === undefined ? snap : (structuredClone(snap as ReadonlyJSONValue) as HumanReadable<TReturn>);
 		this.#snapshot = [data, { type: resultType }] as QueryResult<TReturn>;
 		update(); // Notify Svelte that the data has changed
 	};

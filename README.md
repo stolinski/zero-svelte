@@ -1,6 +1,6 @@
 # Zero Svelte
 
-Zero is the local first platform for building incedible, super fast apps.
+Zero is the local first platform for building incredible, super fast apps.
 
 To use Zero Svelte, you need to follow the Zero docs to get started.
 
@@ -80,7 +80,7 @@ export const z = new Z()<Schema> {
 </div>
 ```
 
-"todos" here is now reactive and will stay in sync with the persistant db and local data.
+"todos" here is now reactive and will stay in sync with the persistent db and local data.
 
 Mutations & queries are done with just standard Zero.
 

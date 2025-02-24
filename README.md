@@ -18,23 +18,36 @@ Watch this
 lib/z.svelte.ts (or whatever you'd like to name)
 
 ```ts
+import { PUBLIC_SERVER } from '$env/static/public';
+import { Z } from 'zero-svelte';
+import { schema, type Schema } from '../zero-schema.js';
 // Schema is imported from wherever your Schema type lives.
 // via export type Schema = typeof schema;
 
-export const z = new Z()<Schema> {
+export function get_z_options() {
+	return {
+		userID: 'anon',
 		server: PUBLIC_SERVER,
 		schema,
-		userID: 'anon'
-		...
-	};
+		// ... other options
+	} as const;
+}
+
+export const z = new Z<Schema>(get_z_options());
 ```
+
++layout.server.ts
+
+```ts
+export const ssr = false;
+```
+
++page.svelte
 
 ```svelte
 <script lang="ts">
-	import { PUBLIC_SERVER } from '$env/static/public';
 	import { Query } from 'zero-svelte';
-	import { Z } from '$lib/z.svelte';
-	import { schema, type Schema } from '../zero-schema.js';
+	import { z } from '$lib/z.svelte';
 
 	const todos = new Query(z.current.query.todo);
 

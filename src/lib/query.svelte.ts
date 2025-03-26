@@ -74,7 +74,13 @@ class ViewWrapper<
 			snap === undefined
 				? snap
 				: (structuredClone(snap as ReadonlyJSONValue) as HumanReadable<TReturn>);
+		// Clear old references
+		this.#refCountMap.delete(this.#data);
+
+		// Update data and track new references
 		this.#data = { '': data };
+		this.#refCountMap.set(this.#data, 1);
+
 		this.#status = { type: resultType };
 		update(); // Notify Svelte that the data has changed
 	};
@@ -155,6 +161,7 @@ export class Query<
 	current = $state<HumanReadable<TReturn>>(null!);
 	details = $state<QueryResultDetails>(null!);
 	#query_impl: AdvancedQuery<TSchema, TTable, TReturn>;
+	#view: ViewWrapper<TSchema, TTable, TReturn> | undefined;
 
 	constructor(query: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
 		const z = getContext('z') as Z<Schema>;
@@ -163,12 +170,26 @@ export class Query<
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
 		this.current = default_snapshot[0] as HumanReadable<TReturn>;
 		this.details = default_snapshot[1];
-		const view = viewStore.getView(id, this.#query_impl, enabled);
-		this.current = view.current[0];
-		this.details = view.current[1];
+		this.#view = viewStore.getView(id, this.#query_impl, enabled);
+		this.current = this.#view.current[0];
+		this.details = this.#view.current[1];
+
+		// Watch for changes in the query
 		$effect(() => {
-			this.current = view.current[0];
-			this.details = view.current[1];
+			if (this.#view) {
+				this.current = this.#view.current[0];
+				this.details = this.#view.current[1];
+			}
 		});
+	}
+
+	// Method to update the query
+	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
+		const z = getContext('z') as Z<Schema>;
+		const id = z?.current?.userID ? z?.current.userID : 'anon';
+		this.#query_impl = newQuery as unknown as AdvancedQuery<TSchema, TTable, TReturn>;
+		this.#view = viewStore.getView(id, this.#query_impl, enabled);
+		this.current = this.#view.current[0];
+		this.details = this.#view.current[1];
 	}
 }

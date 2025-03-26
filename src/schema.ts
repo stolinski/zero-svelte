@@ -1,7 +1,7 @@
 // NOTE:
 // You need your db to exist that matches this schema.
 // I  don't have migration code in this repo, feel free to add
-
+import { createZeroSchema } from 'drizzle-zero';
 import {
 	ANYONE_CAN,
 	boolean,
@@ -11,34 +11,22 @@ import {
 	string,
 	table
 } from '@rocicorp/zero';
+import * as drizzle_schema from './db_schema.js';
 
-const types = table('type')
-	.columns({
-		id: string(),
-		name: string()
-	})
-	.primaryKey('id');
-
-const todos = table('todo')
-	.columns({
-		id: string(),
-		title: string(),
-		completed: boolean(),
-		type_id: string()
-	})
-	.primaryKey('id');
-
-const todoRelationship = relationships(todos, ({ one }) => ({
-	type: one({
-		sourceField: ['type_id'],
-		destField: ['id'],
-		destSchema: types
-	})
-}));
-
-export const schema = createSchema(1, {
-	tables: [types, todos],
-	relationships: [todoRelationship]
+export const schema = createZeroSchema(drizzle_schema, {
+	version: 1,
+	tables: {
+		type: {
+			id: true,
+			name: true
+		},
+		todo: {
+			id: true,
+			title: true,
+			completed: true,
+			type_id: true
+		}
+	}
 });
 
 export type Schema = typeof schema;
@@ -51,6 +39,12 @@ type AuthData = {
 export const permissions = definePermissions<AuthData, Schema>(schema, () => {
 	return {
 		issue: {
+			row: {
+				delete: ANYONE_CAN,
+				insert: ANYONE_CAN
+			}
+		},
+		type: {
 			row: {
 				delete: ANYONE_CAN,
 				insert: ANYONE_CAN

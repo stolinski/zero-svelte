@@ -4,29 +4,16 @@
       "row": {
         "update": {}
       }
+    },
+    "type": {
+      "row": {
+        "update": {}
+      }
     }
   },
   "schema": {
     "version": 1,
     "tables": {
-      "type": {
-        "name": "type",
-        "columns": {
-          "id": {
-            "type": "string",
-            "optional": false,
-            "customType": null
-          },
-          "name": {
-            "type": "string",
-            "optional": false,
-            "customType": null
-          }
-        },
-        "primaryKey": [
-          "id"
-        ]
-      },
       "todo": {
         "name": "todo",
         "columns": {
@@ -42,10 +29,28 @@
           },
           "completed": {
             "type": "boolean",
-            "optional": false,
+            "optional": true,
             "customType": null
           },
           "type_id": {
+            "type": "string",
+            "optional": true,
+            "customType": null
+          }
+        },
+        "primaryKey": [
+          "id"
+        ]
+      },
+      "type": {
+        "name": "type",
+        "columns": {
+          "id": {
+            "type": "string",
+            "optional": false,
+            "customType": null
+          },
+          "name": {
             "type": "string",
             "optional": false,
             "customType": null

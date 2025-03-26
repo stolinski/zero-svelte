@@ -1,7 +1,8 @@
 import { createSubscriber } from 'svelte/reactivity';
 import type { Query as QueryDef, ReadonlyJSONValue, Schema, TypedView } from '@rocicorp/zero';
 
-import type { AdvancedQuery, HumanReadable } from '@rocicorp/zero/advanced';
+import type { AdvancedQuery, Entry, HumanReadable, Change } from '@rocicorp/zero/advanced';
+import { applyChange } from '@rocicorp/zero/advanced';
 import { getContext } from 'svelte';
 import type { Z } from './Z.svelte.js';
 
@@ -32,15 +33,18 @@ class ViewWrapper<
 	TReturn
 > {
 	#view: TypedView<HumanReadable<TReturn>> | undefined;
-	#snapshot: QueryResult<TReturn>;
+	#data = $state<Entry>({ '': undefined });
+	#status = $state<QueryResultDetails>({ type: 'unknown' });
 	#subscribe: () => void;
+	readonly #refCountMap = new WeakMap<Entry, number>();
 
 	constructor(
 		private query: AdvancedQuery<TSchema, TTable, TReturn>,
 		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn>) => void,
 		private onDematerialized: () => void
 	) {
-		this.#snapshot = getDefaultSnapshot(query.format.singular);
+		// Initialize the data based on format
+		this.#data = { '': this.query.format.singular ? undefined : [] };
 
 		// Create a subscriber that manages view lifecycle
 		this.#subscribe = createSubscriber((update) => {
@@ -67,10 +71,24 @@ class ViewWrapper<
 		update: () => void
 	) => {
 		const data =
-			snap === undefined ? snap : (structuredClone(snap as ReadonlyJSONValue) as HumanReadable<TReturn>);
-		this.#snapshot = [data, { type: resultType }] as QueryResult<TReturn>;
+			snap === undefined
+				? snap
+				: (structuredClone(snap as ReadonlyJSONValue) as HumanReadable<TReturn>);
+		this.#data = { '': data };
+		this.#status = { type: resultType };
 		update(); // Notify Svelte that the data has changed
 	};
+
+	#applyChange(change: Change): void {
+		applyChange(
+			this.#data,
+			change,
+			(this.query as any).schema,
+			'',
+			this.query.format,
+			this.#refCountMap
+		);
+	}
 
 	#materializeIfNeeded() {
 		if (!this.#view) {
@@ -83,7 +101,8 @@ class ViewWrapper<
 	get current(): QueryResult<TReturn> {
 		// This triggers the subscription tracking
 		this.#subscribe();
-		return this.#snapshot;
+		const data = this.#data[''];
+		return [data as HumanReadable<TReturn>, this.#status];
 	}
 }
 

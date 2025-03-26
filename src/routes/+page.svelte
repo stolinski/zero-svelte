@@ -7,7 +7,7 @@
 		server: PUBLIC_SERVER,
 		schema,
 		userID: 'anon',
-		kvStore: 'mem',
+		kvStore: 'mem'
 	});
 
 	const todos_query = z.current.query.todo.related('type');
@@ -37,7 +37,6 @@
 <div>
 	<h1>Todo</h1>
 	<form {onsubmit}>
-		pnp
 		<input type="text" id="newTodo" name="newTodo" />
 		<button type="submit">Add</button>
 	</form>

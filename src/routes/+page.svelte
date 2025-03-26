@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { PUBLIC_SERVER } from '$env/static/public';
-	import { Query } from '$lib/Query.svelte.js';
+	import { Query } from '$lib/query.svelte.js';
 	import { Z } from '$lib/Z.svelte.js';
 	import { schema, type Schema } from '../schema.js';
 	const z = new Z<Schema>({
 		server: PUBLIC_SERVER,
 		schema,
-		userID: 'anon'
+		userID: 'anon',
+		kvStore: 'mem',
 	});
 
 	const todos_query = z.current.query.todo.related('type');

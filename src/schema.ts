@@ -3,7 +3,6 @@
 // I  don't have migration code in this repo, feel free to add
 
 import {
-	ANYONE_CAN,
 	ANYONE_CAN_DO_ANYTHING,
 	boolean,
 	createSchema,
@@ -36,8 +35,6 @@ const todoRelationship = relationships(todos, ({ one }) => ({
 		destSchema: types
 	})
 }));
-
-
 
 export const schema = createSchema({
 	tables: [types, todos],

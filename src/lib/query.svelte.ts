@@ -82,7 +82,6 @@ class ViewWrapper<
 		this.#refCountMap.set(this.#data, 1);
 
 		this.#status = { type: resultType };
-		update(); // Notify Svelte that the data has changed
 	};
 
 	#applyChange(change: Change): void {

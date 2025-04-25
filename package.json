@@ -1,6 +1,6 @@
 {
 	"name": "zero-svelte",
-	"version": "0.2.0",
+	"version": "0.3.2",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
@@ -31,28 +31,28 @@
 		"svelte": "^5.15.0"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^4.0.0",
-		"@sveltejs/kit": "^2.17.1",
-		"@sveltejs/package": "^2.3.10",
+		"@sveltejs/adapter-auto": "^6.0.0",
+		"@sveltejs/kit": "^2.20.7",
+		"@sveltejs/package": "^2.3.11",
 		"@sveltejs/vite-plugin-svelte": "^5.0.3",
 		"@types/eslint": "^9.6.0",
-		"eslint": "^9.19.0",
-		"eslint-config-prettier": "^10.0.1",
-		"eslint-plugin-svelte": "^2.46.1",
-		"globals": "^15.14.0",
-		"prettier": "^3.4.2",
+		"eslint": "^9.25.1",
+		"eslint-config-prettier": "^10.1.2",
+		"eslint-plugin-svelte": "^3.5.1",
+		"globals": "^16.0.0",
+		"prettier": "^3.5.3",
 		"prettier-plugin-svelte": "^3.3.3",
-		"publint": "^0.3.2",
-		"svelte": "^5.19.7",
-		"svelte-check": "^4.1.4",
-		"typescript": "^5.7.3",
-		"typescript-eslint": "^8.23.0",
-		"vite": "^6.0.11"
+		"publint": "^0.3.12",
+		"svelte": "^5.28.2",
+		"svelte-check": "^4.1.6",
+		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.31.0",
+		"vite": "^6.3.3"
 	},
 	"svelte": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"type": "module",
 	"dependencies": {
-		"@rocicorp/zero": "^0.15.2025021402"
+		"@rocicorp/zero": "^0.18.2025042300"
 	}
 }

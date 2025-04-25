@@ -3,7 +3,7 @@
 // I  don't have migration code in this repo, feel free to add
 
 import {
-	ANYONE_CAN,
+	ANYONE_CAN_DO_ANYTHING,
 	boolean,
 	createSchema,
 	definePermissions,
@@ -36,7 +36,7 @@ const todoRelationship = relationships(todos, ({ one }) => ({
 	})
 }));
 
-export const schema = createSchema(1, {
+export const schema = createSchema({
 	tables: [types, todos],
 	relationships: [todoRelationship]
 });
@@ -50,11 +50,7 @@ type AuthData = {
 
 export const permissions = definePermissions<AuthData, Schema>(schema, () => {
 	return {
-		todo: {
-			row: {
-				delete: ANYONE_CAN,
-				insert: ANYONE_CAN
-			}
-		}
+		todo: ANYONE_CAN_DO_ANYTHING,
+		type: ANYONE_CAN_DO_ANYTHING
 	};
 });

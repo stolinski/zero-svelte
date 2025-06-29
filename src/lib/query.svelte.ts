@@ -1,20 +1,22 @@
 import { createSubscriber } from 'svelte/reactivity';
-import type { Query as QueryDef, ReadonlyJSONValue, Schema, TypedView } from '@rocicorp/zero';
-
-import type { AdvancedQuery, Entry, HumanReadable, Change } from '@rocicorp/zero/advanced';
-import { applyChange } from '@rocicorp/zero/advanced';
+import type {
+	Query as QueryDef,
+	ReadonlyJSONValue,
+	Schema,
+	TypedView,
+	Entry,
+	HumanReadable,
+	Change
+} from '@rocicorp/zero';
+import { applyChange } from '@rocicorp/zero';
 import { getContext } from 'svelte';
 import type { Z } from './Z.svelte.js';
-
 // Not sure why, TS doesn't really want to allow the import using @rocicorp/zero directly
+// this should end up as './shared/immutable.js
 import type { Immutable } from '../../node_modules/@rocicorp/zero/out/shared/src/immutable.d.ts';
 
 export type ResultType = 'unknown' | 'complete';
-
-export type QueryResultDetails = {
-	type: ResultType;
-};
-
+export type QueryResultDetails = { type: ResultType };
 export type QueryResult<TReturn> = readonly [HumanReadable<TReturn>, QueryResultDetails];
 
 const emptyArray: unknown[] = [];
@@ -39,7 +41,7 @@ class ViewWrapper<
 	readonly #refCountMap = new WeakMap<Entry, number>();
 
 	constructor(
-		private query: AdvancedQuery<TSchema, TTable, TReturn>,
+		private query: QueryDef<TSchema, TTable, TReturn>,
 		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn>) => void,
 		private onDematerialized: () => void
 	) {
@@ -68,7 +70,7 @@ class ViewWrapper<
 	#onData = (
 		snap: Immutable<HumanReadable<TReturn>>,
 		resultType: ResultType,
-		update: () => void
+		update: () => void // not used??
 	) => {
 		const data =
 			snap === undefined
@@ -84,16 +86,17 @@ class ViewWrapper<
 		this.#status = { type: resultType };
 	};
 
-	#applyChange(change: Change): void {
-		applyChange(
-			this.#data,
-			change,
-			(this.query as any).schema,
-			'',
-			this.query.format,
-			this.#refCountMap
-		);
-	}
+	// Not used and the applyChange method is depricated
+	// #applyChange(change: Change): void {
+	// 	applyChange(
+	// 		this.#data,
+	// 		change,
+	// 		(this.query as any).schema,
+	// 		'',
+	// 		this.query.format,
+	// 		this.#refCountMap
+	// 	);
+	// }
 
 	#materializeIfNeeded() {
 		if (!this.#view) {
@@ -117,7 +120,7 @@ class ViewStore {
 
 	getView<TSchema extends Schema, TTable extends keyof TSchema['tables'] & string, TReturn>(
 		clientID: string,
-		query: AdvancedQuery<TSchema, TTable, TReturn>,
+		query: QueryDef<TSchema, TTable, TReturn>,
 		enabled: boolean = true
 	): ViewWrapper<TSchema, TTable, TReturn> {
 		if (!enabled) {
@@ -159,13 +162,13 @@ export class Query<
 > {
 	current = $state<HumanReadable<TReturn>>(null!);
 	details = $state<QueryResultDetails>(null!);
-	#query_impl: AdvancedQuery<TSchema, TTable, TReturn>;
+	#query_impl: QueryDef<TSchema, TTable, TReturn>;
 	#view: ViewWrapper<TSchema, TTable, TReturn> | undefined;
 
 	constructor(query: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
 		const z = getContext('z') as Z<Schema>;
 		const id = z?.current?.userID ? z?.current.userID : 'anon';
-		this.#query_impl = query as unknown as AdvancedQuery<TSchema, TTable, TReturn>;
+		this.#query_impl = query as unknown as QueryDef<TSchema, TTable, TReturn>;
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
 		this.current = default_snapshot[0] as HumanReadable<TReturn>;
 		this.details = default_snapshot[1];
@@ -186,7 +189,7 @@ export class Query<
 	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
 		const z = getContext('z') as Z<Schema>;
 		const id = z?.current?.userID ? z?.current.userID : 'anon';
-		this.#query_impl = newQuery as unknown as AdvancedQuery<TSchema, TTable, TReturn>;
+		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
 		this.#view = viewStore.getView(id, this.#query_impl, enabled);
 		this.current = this.#view.current[0];
 		this.details = this.#view.current[1];

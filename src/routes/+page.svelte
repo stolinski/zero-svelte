@@ -20,7 +20,7 @@
 		}
 		return new Query(z.current.query.todo.related('type'));
 	});
-
+$inspect(todos.current)
 	// Basic query
 	const types = new Query(z.current.query.type);
 
@@ -85,7 +85,7 @@
 					value={todo.id}
 					checked={todo.completed}
 					oninput={toggleTodo}
-				/>{todo.title} - {todo?.type?.name}
+				/>{todo.title} - {todo.type?.name}
 			</li>
 		{/each}
 	</ul>

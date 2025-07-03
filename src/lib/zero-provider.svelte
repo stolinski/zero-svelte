@@ -28,7 +28,7 @@
 
 	let { init = () => {}, children, ...props }: Props = $props();
 
-	// If Zero is not passed in, we construct it, but only client-side.
+	// If Zero is not passed in, we construct it. (SSR must be disabled, for now.)
 	// Zero doesn't really work SSR today so this is usually the right thing.
 	// When we support Zero SSR this will either become a breaking change or
 	// more likely server support will be opt-in with a new prop on this

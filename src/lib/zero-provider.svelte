@@ -34,19 +34,22 @@
 	// more likely server support will be opt-in with a new prop on this
 	// component.
 
-	$effect.pre(() => {
-		if ('zero' in props) {
-			const zero = props.zero as Z<S, MD>;
-			setContext(ZERO_CONTEXT_KEY, zero);
-			return;
-		}
+	let z: Z<S, MD>;
 
-		const z = new Z(props);
+	if ('zero' in props) {
+		z = props.zero as Z<S, MD>;
+	} else {
+		z = new Z(props);
 		init?.(z);
-		setContext(ZERO_CONTEXT_KEY, z);
+	}
 
+	setContext(ZERO_CONTEXT_KEY, z);
+
+	// Cleanup the Zero instance when this component is destroyed.
+	$effect(() => {
 		return () => {
-			void z.close();
+			z.close();
+			setContext(ZERO_CONTEXT_KEY, undefined);
 		};
 	});
 </script>

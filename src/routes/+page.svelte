@@ -1,15 +1,9 @@
 <script lang="ts">
-	import './styles.css';
-	import { PUBLIC_SERVER } from '$env/static/public';
+	import { useZero } from '$lib/components/zero-init.svelte';
 	import { Query } from '$lib/query.svelte.js';
-	import { Z } from '$lib/Z.svelte.js';
-	import { schema, type Schema } from '../schema.js';
-	const z = new Z<Schema>({
-		server: PUBLIC_SERVER,
-		schema,
-		userID: 'anon',
-		kvStore: 'mem'
-	});
+	import './styles.css';
+
+	const z = useZero();
 
 	let filtered_type: string | undefined = $state();
 
@@ -20,7 +14,7 @@
 		}
 		return new Query(z.current.query.todo.related('type'));
 	});
-$inspect(todos.current)
+	$inspect(todos.current);
 	// Basic query
 	const types = new Query(z.current.query.type);
 

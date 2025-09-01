@@ -1,23 +1,34 @@
-import { createSubscriber } from 'svelte/reactivity';
 import type {
+	Entry,
+	HumanReadable,
 	Query as QueryDef,
 	ReadonlyJSONValue,
 	Schema,
-	TypedView,
-	Entry,
-	HumanReadable,
-	Change
+	TTL,
+	TypedView
 } from '@rocicorp/zero';
-import { applyChange } from '@rocicorp/zero';
 import { getContext } from 'svelte';
-import type { Z } from './Z.svelte.js';
+import { createSubscriber } from 'svelte/reactivity';
+
 // Not sure why, TS doesn't really want to allow the import using @rocicorp/zero directly
 // this should end up as './shared/immutable.js
 import type { Immutable } from '../../node_modules/@rocicorp/zero/out/shared/src/immutable.d.ts';
+import { DEFAULT_TTL_MS } from '../../node_modules/@rocicorp/zero/out/zql/src/query/ttl.js';
+
+import type { Z } from './Z.svelte.js';
 
 export type ResultType = 'unknown' | 'complete';
 export type QueryResultDetails = { type: ResultType };
 export type QueryResult<TReturn> = readonly [HumanReadable<TReturn>, QueryResultDetails];
+export type QueryOptions = {
+	enabled?: boolean;
+	/**
+	 * Time to live. This determines how long to cache the results of this query.
+	 * If undefined (or 0) the query will be cached as long as it is not removed and
+	 * there is enough space
+	 */
+	ttl?: TTL;
+};
 
 const emptyArray: unknown[] = [];
 const defaultSnapshots = {
@@ -39,12 +50,17 @@ class ViewWrapper<
 	#status = $state<QueryResultDetails>({ type: 'unknown' });
 	#subscribe: () => void;
 	readonly #refCountMap = new WeakMap<Entry, number>();
+	#ttl: TTL | undefined;
 
 	constructor(
+		private zero: Z<Schema>,
 		private query: QueryDef<TSchema, TTable, TReturn>,
+		ttl: TTL | undefined,
 		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn>) => void,
 		private onDematerialized: () => void
 	) {
+		this.#ttl = ttl;
+
 		// Initialize the data based on format
 		this.#data = { '': this.query.format.singular ? undefined : [] };
 
@@ -70,7 +86,7 @@ class ViewWrapper<
 	#onData = (
 		snap: Immutable<HumanReadable<TReturn>>,
 		resultType: ResultType,
-		update: () => void // not used??
+		_update: () => void
 	) => {
 		const data =
 			snap === undefined
@@ -86,23 +102,16 @@ class ViewWrapper<
 		this.#status = { type: resultType };
 	};
 
-	// Not used and the applyChange method is depricated
-	// #applyChange(change: Change): void {
-	// 	applyChange(
-	// 		this.#data,
-	// 		change,
-	// 		(this.query as any).schema,
-	// 		'',
-	// 		this.query.format,
-	// 		this.#refCountMap
-	// 	);
-	// }
-
 	#materializeIfNeeded() {
 		if (!this.#view) {
-			this.#view = this.query.materialize();
+			this.#view = this.zero.current.materialize(this.query, { ttl: this.#ttl });
 			this.onMaterialized(this);
 		}
+	}
+
+	updateTTL(ttl: TTL): void {
+		this.#ttl = ttl;
+		this.#view?.updateTTL(ttl);
 	}
 
 	// Used in Svelte components
@@ -120,12 +129,16 @@ class ViewStore {
 
 	getView<TSchema extends Schema, TTable extends keyof TSchema['tables'] & string, TReturn>(
 		clientID: string,
+		zero: Z<Schema>,
 		query: QueryDef<TSchema, TTable, TReturn>,
-		enabled: boolean = true
+		enabled: boolean,
+		ttl: TTL
 	): ViewWrapper<TSchema, TTable, TReturn> {
 		if (!enabled) {
 			return new ViewWrapper(
+				zero,
 				query,
+				ttl,
 				() => {},
 				() => {}
 			);
@@ -136,7 +149,9 @@ class ViewStore {
 
 		if (!existing) {
 			existing = new ViewWrapper(
+				zero,
 				query,
+				ttl,
 				(view) => {
 					const lastView = this.#views.get(hash);
 					if (lastView && lastView !== view) {
@@ -147,6 +162,11 @@ class ViewStore {
 				() => this.#views.delete(hash)
 			);
 			this.#views.set(hash, existing);
+		} else {
+			// Update TTL on existing view
+			if (ttl !== undefined) {
+				existing.updateTTL(ttl);
+			}
 		}
 
 		return existing;
@@ -164,15 +184,28 @@ export class Query<
 	details = $state<QueryResultDetails>(null!);
 	#query_impl: QueryDef<TSchema, TTable, TReturn>;
 	#view: ViewWrapper<TSchema, TTable, TReturn> | undefined;
+	#ttl: TTL | undefined;
 
-	constructor(query: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
+	constructor(query: QueryDef<TSchema, TTable, TReturn>, options?: QueryOptions | boolean) {
+		let enabled = true;
+		let ttl: TTL = DEFAULT_TTL_MS;
+
+		if (typeof options === 'boolean') {
+			if (typeof options === 'boolean') {
+				enabled = options;
+			} else if (options) {
+				({ enabled = true, ttl = DEFAULT_TTL_MS } = options);
+			}
+		}
+
 		const z = getContext('z') as Z<Schema>;
 		const id = z?.current?.userID ? z?.current.userID : 'anon';
 		this.#query_impl = query as unknown as QueryDef<TSchema, TTable, TReturn>;
+		this.#ttl = ttl;
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
 		this.current = default_snapshot[0] as HumanReadable<TReturn>;
 		this.details = default_snapshot[1];
-		this.#view = viewStore.getView(id, this.#query_impl, enabled);
+		this.#view = viewStore.getView(id, z, this.#query_impl, enabled, this.#ttl);
 		this.current = this.#view.current[0];
 		this.details = this.#view.current[1];
 
@@ -185,13 +218,9 @@ export class Query<
 		});
 	}
 
-	// Method to update the query
-	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
-		const z = getContext('z') as Z<Schema>;
-		const id = z?.current?.userID ? z?.current.userID : 'anon';
-		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
-		this.#view = viewStore.getView(id, this.#query_impl, enabled);
-		this.current = this.#view.current[0];
-		this.details = this.#view.current[1];
+	// Add updateTTL method to Query class
+	updateTTL(ttl: TTL): void {
+		this.#ttl = ttl;
+		this.#view?.updateTTL(ttl);
 	}
 }

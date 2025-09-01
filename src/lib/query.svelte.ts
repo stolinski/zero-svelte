@@ -1,15 +1,13 @@
-import { createSubscriber } from 'svelte/reactivity';
 import type {
+	Entry,
+	HumanReadable,
 	Query as QueryDef,
 	ReadonlyJSONValue,
 	Schema,
-	TypedView,
-	Entry,
-	HumanReadable,
-	Change
+	TypedView
 } from '@rocicorp/zero';
-import { applyChange } from '@rocicorp/zero';
 import { getContext } from 'svelte';
+import { createSubscriber } from 'svelte/reactivity';
 import type { Z } from './Z.svelte.js';
 // Not sure why, TS doesn't really want to allow the import using @rocicorp/zero directly
 // this should end up as './shared/immutable.js
@@ -41,6 +39,7 @@ class ViewWrapper<
 	readonly #refCountMap = new WeakMap<Entry, number>();
 
 	constructor(
+		private zero: Z<TSchema>,
 		private query: QueryDef<TSchema, TTable, TReturn>,
 		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn>) => void,
 		private onDematerialized: () => void
@@ -100,7 +99,7 @@ class ViewWrapper<
 
 	#materializeIfNeeded() {
 		if (!this.#view) {
-			this.#view = this.query.materialize();
+			this.#view = this.zero.current.materialize(this.query);
 			this.onMaterialized(this);
 		}
 	}
@@ -120,11 +119,13 @@ class ViewStore {
 
 	getView<TSchema extends Schema, TTable extends keyof TSchema['tables'] & string, TReturn>(
 		clientID: string,
+		zero: Z<TSchema>,
 		query: QueryDef<TSchema, TTable, TReturn>,
 		enabled: boolean = true
 	): ViewWrapper<TSchema, TTable, TReturn> {
 		if (!enabled) {
 			return new ViewWrapper(
+				zero,
 				query,
 				() => {},
 				() => {}
@@ -136,6 +137,7 @@ class ViewStore {
 
 		if (!existing) {
 			existing = new ViewWrapper(
+				zero,
 				query,
 				(view) => {
 					const lastView = this.#views.get(hash);
@@ -190,7 +192,7 @@ export class Query<
 		const z = getContext('z') as Z<Schema>;
 		const id = z?.current?.userID ? z?.current.userID : 'anon';
 		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
-		this.#view = viewStore.getView(id, this.#query_impl, enabled);
+		this.#view = viewStore.getView(id, z, this.#query_impl, enabled);
 		this.current = this.#view.current[0];
 		this.details = this.#view.current[1];
 	}

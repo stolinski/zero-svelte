@@ -53,6 +53,7 @@ class ViewWrapper<
 	#ttl: TTL | undefined;
 
 	constructor(
+		private zero: Z<Schema>,
 		private query: QueryDef<TSchema, TTable, TReturn>,
 		ttl: TTL | undefined,
 		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn>) => void,
@@ -103,7 +104,7 @@ class ViewWrapper<
 
 	#materializeIfNeeded() {
 		if (!this.#view) {
-			this.#view = this.query.materialize(this.#ttl);
+			this.#view = this.zero.current.materialize(this.query, { ttl: this.#ttl });
 			this.onMaterialized(this);
 		}
 	}
@@ -128,12 +129,14 @@ class ViewStore {
 
 	getView<TSchema extends Schema, TTable extends keyof TSchema['tables'] & string, TReturn>(
 		clientID: string,
+		zero: Z<Schema>,
 		query: QueryDef<TSchema, TTable, TReturn>,
 		enabled: boolean,
 		ttl: TTL
 	): ViewWrapper<TSchema, TTable, TReturn> {
 		if (!enabled) {
 			return new ViewWrapper(
+				zero,
 				query,
 				ttl,
 				() => {},
@@ -146,6 +149,7 @@ class ViewStore {
 
 		if (!existing) {
 			existing = new ViewWrapper(
+				zero,
 				query,
 				ttl,
 				(view) => {
@@ -201,7 +205,7 @@ export class Query<
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
 		this.current = default_snapshot[0] as HumanReadable<TReturn>;
 		this.details = default_snapshot[1];
-		this.#view = viewStore.getView(id, this.#query_impl, enabled, this.#ttl);
+		this.#view = viewStore.getView(id, z, this.#query_impl, enabled, this.#ttl);
 		this.current = this.#view.current[0];
 		this.details = this.#view.current[1];
 

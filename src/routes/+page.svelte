@@ -3,7 +3,8 @@
 	import { PUBLIC_SERVER } from '$env/static/public';
 	import { Query } from '$lib/query.svelte.js';
 	import { Z } from '$lib/Z.svelte.js';
-	import { schema, type Schema } from '../schema.js';
+	import { queries, schema, type Schema } from '../schema.js';
+
 	const z = new Z<Schema>({
 		server: PUBLIC_SERVER,
 		schema,
@@ -20,9 +21,10 @@
 		}
 		return new Query(z.current.query.todo.related('type'));
 	});
-$inspect(todos.current)
+	$inspect(todos.current);
+
 	// Basic query
-	const types = new Query(z.current.query.type);
+	const types = new Query(queries.allTypes());
 
 	const randID = () => Math.random().toString(36).slice(2);
 

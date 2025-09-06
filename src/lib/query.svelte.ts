@@ -1,15 +1,13 @@
-import { createSubscriber } from 'svelte/reactivity';
 import type {
+	Entry,
+	HumanReadable,
 	Query as QueryDef,
 	ReadonlyJSONValue,
 	Schema,
-	TypedView,
-	Entry,
-	HumanReadable,
-	Change
+	TypedView
 } from '@rocicorp/zero';
-import { applyChange } from '@rocicorp/zero';
 import { getContext } from 'svelte';
+import { createSubscriber } from 'svelte/reactivity';
 import type { Z } from './Z.svelte.js';
 // Not sure why, TS doesn't really want to allow the import using @rocicorp/zero directly
 // this should end up as './shared/immutable.js
@@ -41,6 +39,7 @@ class ViewWrapper<
 	readonly #refCountMap = new WeakMap<Entry, number>();
 
 	constructor(
+		private z: Z<Schema>,
 		private query: QueryDef<TSchema, TTable, TReturn>,
 		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn>) => void,
 		private onDematerialized: () => void
@@ -100,7 +99,7 @@ class ViewWrapper<
 
 	#materializeIfNeeded() {
 		if (!this.#view) {
-			this.#view = this.query.materialize();
+			this.#view = this.z.current.materialize(this.query);
 			this.onMaterialized(this);
 		}
 	}
@@ -119,23 +118,26 @@ class ViewStore {
 	#views = new Map<string, ViewWrapper<any, any, any>>();
 
 	getView<TSchema extends Schema, TTable extends keyof TSchema['tables'] & string, TReturn>(
-		clientID: string,
+		z: Z<Schema>,
 		query: QueryDef<TSchema, TTable, TReturn>,
 		enabled: boolean = true
 	): ViewWrapper<TSchema, TTable, TReturn> {
 		if (!enabled) {
 			return new ViewWrapper(
+				z,
 				query,
 				() => {},
 				() => {}
 			);
 		}
 
-		const hash = query.hash() + clientID;
+		const id = z?.current?.userID ? z?.current.userID : 'anon';
+		const hash = query.hash() + id;
 		let existing = this.#views.get(hash);
 
 		if (!existing) {
 			existing = new ViewWrapper(
+				z,
 				query,
 				(view) => {
 					const lastView = this.#views.get(hash);
@@ -167,12 +169,11 @@ export class Query<
 
 	constructor(query: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
 		const z = getContext('z') as Z<Schema>;
-		const id = z?.current?.userID ? z?.current.userID : 'anon';
 		this.#query_impl = query as unknown as QueryDef<TSchema, TTable, TReturn>;
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
 		this.current = default_snapshot[0] as HumanReadable<TReturn>;
 		this.details = default_snapshot[1];
-		this.#view = viewStore.getView(id, this.#query_impl, enabled);
+		this.#view = viewStore.getView(z, this.#query_impl, enabled);
 		this.current = this.#view.current[0];
 		this.details = this.#view.current[1];
 
@@ -188,9 +189,8 @@ export class Query<
 	// Method to update the query
 	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
 		const z = getContext('z') as Z<Schema>;
-		const id = z?.current?.userID ? z?.current.userID : 'anon';
 		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
-		this.#view = viewStore.getView(id, this.#query_impl, enabled);
+		this.#view = viewStore.getView(z, this.#query_impl, enabled);
 		this.current = this.#view.current[0];
 		this.details = this.#view.current[1];
 	}

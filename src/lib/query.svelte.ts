@@ -1,15 +1,13 @@
-import { createSubscriber } from 'svelte/reactivity';
 import type {
+	Entry,
+	HumanReadable,
 	Query as QueryDef,
 	ReadonlyJSONValue,
 	Schema,
-	TypedView,
-	Entry,
-	HumanReadable,
-	Change
+	TypedView
 } from '@rocicorp/zero';
-import { applyChange } from '@rocicorp/zero';
 import { getContext } from 'svelte';
+import { createSubscriber } from 'svelte/reactivity';
 import type { Z } from './Z.svelte.js';
 // Not sure why, TS doesn't really want to allow the import using @rocicorp/zero directly
 // this should end up as './shared/immutable.js
@@ -163,16 +161,32 @@ export class Query<
 	current = $state<HumanReadable<TReturn>>(null!);
 	details = $state<QueryResultDetails>(null!);
 	#query_impl: QueryDef<TSchema, TTable, TReturn>;
+	#enabled: boolean;
 	#view: ViewWrapper<TSchema, TTable, TReturn> | undefined;
 
 	constructor(query: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
-		const z = getContext('z') as Z<Schema>;
-		const id = z?.current?.userID ? z?.current.userID : 'anon';
-		this.#query_impl = query as unknown as QueryDef<TSchema, TTable, TReturn>;
+		this.#query_impl = query;
+		this.#enabled = enabled;
+
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
 		this.current = default_snapshot[0] as HumanReadable<TReturn>;
 		this.details = default_snapshot[1];
-		this.#view = viewStore.getView(id, this.#query_impl, enabled);
+
+		this.#init();
+	}
+
+	// Method to update the query
+	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
+		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
+		this.#enabled = enabled;
+		this.#init();
+	}
+
+	#init() {
+		const z = getContext('z') as Z<Schema>;
+		const id = z?.current.userID ?? 'anon';
+
+		this.#view = viewStore.getView(id, this.#query_impl, this.#enabled);
 		this.current = this.#view.current[0];
 		this.details = this.#view.current[1];
 
@@ -183,15 +197,5 @@ export class Query<
 				this.details = this.#view.current[1];
 			}
 		});
-	}
-
-	// Method to update the query
-	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
-		const z = getContext('z') as Z<Schema>;
-		const id = z?.current?.userID ? z?.current.userID : 'anon';
-		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
-		this.#view = viewStore.getView(id, this.#query_impl, enabled);
-		this.current = this.#view.current[0];
-		this.details = this.#view.current[1];
 	}
 }

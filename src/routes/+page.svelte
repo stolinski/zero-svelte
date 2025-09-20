@@ -73,7 +73,7 @@
 	</form>
 	<h1>Todos</h1>
 	<select bind:value={filtered_type} name="todo_type" id="todo_type">
-		{#each types.current as type}
+		{#each types.current as type (type.id + 'option-list')}
 			<option value={type.id}>{type.name}</option>
 		{/each}
 	</select>

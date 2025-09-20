@@ -52,7 +52,7 @@ class ViewWrapper<
 
 			if (this.#view) {
 				// Pass the update function to onData so it can notify Svelte of changes
-				this.#view.addListener((snap, resultType) => this.#onData(snap, resultType, update));
+				this.#view.addListener((snap, resultType) => this.#onData(snap, resultType));
 			}
 
 			// Return cleanup function that will only be called

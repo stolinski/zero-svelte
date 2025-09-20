@@ -1,5 +1,6 @@
 <script lang="ts">
 	import './styles.css';
+	// @ts-ignore
 	import { PUBLIC_SERVER } from '$env/static/public';
 	import { Query } from '$lib/query.svelte.js';
 	import { Z } from '$lib/Z.svelte.js';

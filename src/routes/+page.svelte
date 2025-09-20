@@ -1,6 +1,6 @@
 <script lang="ts">
 	import './styles.css';
-	// @ts-ignore
+	// @ts-expect-error SvelteKit env import may not be recognized in some contexts
 	import { PUBLIC_SERVER } from '$env/static/public';
 	import { Query } from '$lib/query.svelte.js';
 	import { Z } from '$lib/Z.svelte.js';

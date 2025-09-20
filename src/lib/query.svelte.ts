@@ -47,7 +47,7 @@ class ViewWrapper<
 		this.#data = { '': this.query.format.singular ? undefined : [] };
 
 		// Create a subscriber that manages view lifecycle
-		this.#subscribe = createSubscriber((update) => {
+		this.#subscribe = createSubscriber(() => {
 			this.#materializeIfNeeded();
 
 			if (this.#view) {

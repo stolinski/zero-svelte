@@ -20,7 +20,7 @@
 		}
 		return new Query(z.current.query.todo.related('type'));
 	});
-$inspect(todos.current)
+	$inspect(todos.current);
 	// Basic query
 	const types = new Query(z.current.query.type);
 
@@ -65,7 +65,7 @@ $inspect(todos.current)
 	<form {onsubmit}>
 		<input type="text" id="todo_name" name="todo_name" />
 		<select name="todo_type" id="todo_type">
-			{#each types.current as type}
+			{#each types.current as type (type.id)}
 				<option value={type.id}>{type.name}</option>
 			{/each}
 		</select>
@@ -78,7 +78,7 @@ $inspect(todos.current)
 		{/each}
 	</select>
 	<ul>
-		{#each todos.current as todo}
+		{#each todos.current as todo (todo.id)}
 			<li>
 				<input
 					type="checkbox"

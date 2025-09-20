@@ -2,10 +2,7 @@ import { Zero, type Schema, type ZeroOptions, type CustomMutatorDefs } from '@ro
 
 // This is the state of the Zero instance
 // You can reset it on login or logout
-export class Z<
-	TSchema extends Schema,
-	MD extends CustomMutatorDefs<TSchema> | undefined = undefined
-> {
+export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined = undefined> {
 	current: Zero<TSchema, MD> = $state(null!);
 
 	constructor(z_options: ZeroOptions<TSchema, MD>) {

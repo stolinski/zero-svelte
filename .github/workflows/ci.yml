@@ -78,7 +78,7 @@ jobs:
           fi
 
       - name: Lint (ESLint)
-        run: npx eslint .
+        run: npm run lint
       - run: npm run check
       - run: npm run build
       - run: npm run package

@@ -39,7 +39,7 @@ jobs:
         run: npm run format
 
       - name: Lint (ESLint)
-        run: npx eslint .
+        run: npm run lint
 
       - name: Typecheck/Package
         run: npm run check && npm run package

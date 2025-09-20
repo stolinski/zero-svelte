@@ -28,7 +28,7 @@ export function get_z_options() {
 	return {
 		userID: 'anon',
 		server: PUBLIC_SERVER,
-		schema,
+		schema
 		// ... other options
 	} as const;
 }

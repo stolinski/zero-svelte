@@ -67,7 +67,7 @@ class ViewWrapper<
 
 	#onData = (
 		snap: Immutable<HumanReadable<TReturn>>,
-		resultType: ResultType,
+		resultType: ResultType
 		// update: () => void // not used??
 	) => {
 		const data =
@@ -83,7 +83,6 @@ class ViewWrapper<
 
 		this.#status = { type: resultType };
 	};
-
 
 	#materializeIfNeeded() {
 		if (!this.#view) {

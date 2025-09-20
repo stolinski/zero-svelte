@@ -68,7 +68,7 @@ class ViewWrapper<
 	#onData = (
 		snap: Immutable<HumanReadable<TReturn>>,
 		resultType: ResultType,
-		update: () => void // not used??
+		// update: () => void // not used??
 	) => {
 		const data =
 			snap === undefined

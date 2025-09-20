@@ -18,6 +18,18 @@ export default tseslint.config(
 			}
 		}
 	},
+	// Use TypeScript parser for TS files (incl. .svelte.ts)
+	{
+		files: ['**/*.{ts,tsx,cts,mts}'],
+		languageOptions: {
+			parser: tseslint.parser,
+			parserOptions: {
+				ecmaVersion: 'latest',
+				sourceType: 'module'
+			}
+		}
+	},
+	// Ensure Svelte files delegate to TS parser inside script blocks
 	{
 		files: ['**/*.svelte'],
 		languageOptions: {

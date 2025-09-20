@@ -17,11 +17,27 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify changeset exists when code changes
+        uses: tj-actions/changed-files@v45
+        id: changed
+        with:
+          files: |
+            src/**
+            package.json
+            !.changeset/**
+      - name: Require changeset
+        if: steps.changed.outputs.any_changed == 'true'
+        run: |
+          if [[ -z "$(ls .changeset | grep -E '\.md$' || true)" ]]; then
+            echo "Missing changeset: add one with 'npm run changeset'";
+            exit 1;
+          fi
 
       - run: npm run lint
       - run: npm run check

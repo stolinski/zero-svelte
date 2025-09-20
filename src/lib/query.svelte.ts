@@ -5,10 +5,8 @@ import type {
 	Schema,
 	TypedView,
 	Entry,
-	HumanReadable,
-	Change
+	HumanReadable
 } from '@rocicorp/zero';
-import { applyChange } from '@rocicorp/zero';
 import { getContext } from 'svelte';
 import type { Z } from './Z.svelte.js';
 // Not sure why, TS doesn't really want to allow the import using @rocicorp/zero directly
@@ -86,17 +84,6 @@ class ViewWrapper<
 		this.#status = { type: resultType };
 	};
 
-	// Not used and the applyChange method is depricated
-	// #applyChange(change: Change): void {
-	// 	applyChange(
-	// 		this.#data,
-	// 		change,
-	// 		(this.query as any).schema,
-	// 		'',
-	// 		this.query.format,
-	// 		this.#refCountMap
-	// 	);
-	// }
 
 	#materializeIfNeeded() {
 		if (!this.#view) {

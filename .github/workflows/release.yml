@@ -29,23 +29,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          standalone: true
-
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Lint/Typecheck/Package
-        run: pnpm lint && pnpm check && pnpm package
+        run: npm run lint && npm run check && npm run package
 
       - name: Version packages (Changesets)
-        run: pnpm changeset version
+        run: npx changeset version
 
       - name: Commit version files
         run: |
@@ -58,10 +52,10 @@ jobs:
           fi
 
       - name: Reinstall (in case lockfile changed)
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Publish to npm
-        run: pnpm run release
+        run: npm run release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

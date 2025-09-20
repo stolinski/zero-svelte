@@ -8,6 +8,10 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -23,23 +27,58 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify changeset exists when code changes
+      - name: Detect source changes (gates changeset)
         uses: tj-actions/changed-files@v45
         id: changed
         with:
           files: |
             src/**
-            package.json
             !.changeset/**
-      - name: Require changeset
-        if: steps.changed.outputs.any_changed == 'true'
+
+      - name: Check for missing changeset
+        id: need_changeset
+        if: ${{ steps.changed.outputs.any_changed == 'true' && !contains(github.event.pull_request.labels.*.name, 'skip-release') }}
         run: |
           if [[ -z "$(ls .changeset | grep -E '\.md$' || true)" ]]; then
-            echo "Missing changeset: add one with 'npm run changeset'";
+            echo "missing=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "missing=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment with instructions
+        if: ${{ steps.need_changeset.outputs.missing == 'true' }}
+        uses: peter-evans/create-or-update-comment@v4
+        continue-on-error: true
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            It looks like this PR changes publishable code but does not include a Changeset.
+
+            To fix:
+            1. Run `npm run changeset` locally and choose patch/minor/major.
+            2. Commit the generated `.changeset/*.md` file to this PR.
+
+            If this PR does not require a release (docs/CI/dev-only), add the `skip-release` label.
+
+      - name: Fail if missing changeset
+        if: ${{ steps.need_changeset.outputs.missing == 'true' }}
+        run: |
+          echo "Missing changeset: add one with 'npm run changeset' or label this PR 'skip-release'."
+          exit 1
+
+      - name: Format (Prettier write)
+        run: npm run format
+
+      - name: Verify no formatting changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Prettier made changes. Run 'npm run format' locally and commit them.";
+            git --no-pager diff --name-only;
             exit 1;
           fi
 
-      - run: npm run lint
+      - name: Lint (ESLint)
+        run: npx eslint .
       - run: npm run check
       - run: npm run build
       - run: npm run package

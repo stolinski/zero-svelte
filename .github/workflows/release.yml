@@ -35,8 +35,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint/Typecheck/Package
-        run: npm run lint && npm run check && npm run package
+      - name: Format (Prettier write)
+        run: npm run format
+
+      - name: Lint (ESLint)
+        run: npx eslint .
+
+      - name: Typecheck/Package
+        run: npm run check && npm run package
 
       - name: Version packages (Changesets)
         run: npx changeset version

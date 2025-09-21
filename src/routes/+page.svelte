@@ -21,7 +21,7 @@
 		}
 		return new Query(z.current.query.todo.related('type'));
 	});
-	// Basic query
+	// Basic query, reactive by default
 	const types = new Query(queries.allTypes());
 
 	const randID = () => Math.random().toString(36).slice(2);

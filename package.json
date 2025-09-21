@@ -60,6 +60,10 @@
 	"svelte": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/stolinski/zero-svelte"
+	},
 	"dependencies": {
 		"@rocicorp/zero": "^0.23.2025090100"
 	},

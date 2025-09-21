@@ -81,6 +81,10 @@ jobs:
             exit 1;
           fi
 
+      - name: Create .env for CI (SvelteKit static env)
+        run: |
+          echo "PUBLIC_SERVER=${{ secrets.PUBLIC_SERVER }}" > .env
+
       - name: Sync SvelteKit types
         run: npm run sync
 

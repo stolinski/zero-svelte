@@ -15,6 +15,7 @@
 		"lint": "eslint .",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
+		"sync": "svelte-kit sync",
 		"verify": "npm run format && (git diff --quiet || (echo \"Prettier made changes. Run 'npm run format' and commit them.\" && git --no-pager diff --name-only && exit 1)) && npm run lint && npm run check && npm run build && npm run package",
 		"dev:db-up": "docker compose --env-file .env -f ./docker/docker-compose.yml up",
 		"dev:db-down": "docker compose --env-file .env -f ./docker/docker-compose.yml down"

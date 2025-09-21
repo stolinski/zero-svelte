@@ -41,6 +41,8 @@ jobs:
         id: need_changeset
         if: ${{ steps.changed.outputs.any_changed == 'true' && !contains(join(github.event.pull_request.labels.*.name, ','), 'skip-release') }}
         run: |
+          echo "Debug: PR labels: ${{ join(github.event.pull_request.labels.*.name, ',') }}"
+          echo "Debug: any_changed=${{ steps.changed.outputs.any_changed }}"
           if [[ -z "$(ls .changeset | grep -E '\.md$' || true)" ]]; then
             echo "missing=true" >> "$GITHUB_OUTPUT"
           else
@@ -78,6 +80,9 @@ jobs:
             git --no-pager diff --name-only;
             exit 1;
           fi
+
+      - name: Sync SvelteKit types
+        run: npm run sync
 
       - name: Lint (ESLint)
         run: npm run lint

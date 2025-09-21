@@ -48,12 +48,12 @@ class ViewWrapper<
 		this.#data = { '': this.query.format.singular ? undefined : [] };
 
 		// Create a subscriber that manages view lifecycle
-		this.#subscribe = createSubscriber((update) => {
+		this.#subscribe = createSubscriber(() => {
 			this.#materializeIfNeeded();
 
 			if (this.#view) {
 				// Pass the update function to onData so it can notify Svelte of changes
-				this.#view.addListener((snap, resultType) => this.#onData(snap, resultType, update));
+				this.#view.addListener((snap, resultType) => this.#onData(snap, resultType));
 			}
 
 			// Return cleanup function that will only be called
@@ -68,8 +68,8 @@ class ViewWrapper<
 
 	#onData = (
 		snap: Immutable<HumanReadable<TReturn>>,
-		resultType: ResultType,
-		update: () => void // not used??
+		resultType: ResultType
+		// update: () => void // not used??
 	) => {
 		const data =
 			snap === undefined
@@ -84,18 +84,6 @@ class ViewWrapper<
 
 		this.#status = { type: resultType };
 	};
-
-	// Not used and the applyChange method is depricated
-	// #applyChange(change: Change): void {
-	// 	applyChange(
-	// 		this.#data,
-	// 		change,
-	// 		(this.query as any).schema,
-	// 		'',
-	// 		this.query.format,
-	// 		this.#refCountMap
-	// 	);
-	// }
 
 	#materializeIfNeeded() {
 		if (!this.#view) {

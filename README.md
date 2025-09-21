@@ -28,7 +28,7 @@ export function get_z_options() {
 	return {
 		userID: 'anon',
 		server: PUBLIC_SERVER,
-		schema,
+		schema
 		// ... other options
 	} as const;
 }
@@ -106,3 +106,11 @@ See demo for real working code.
 See Zero docs for more info.
 
 Listen to [Syntax](Syntax.fm) for tasty web development treats.
+
+## Contributing
+
+- Run `npm ci` to install dependencies (Node 22+).
+- Run `npm run verify` before pushing. It formats, then fails if it produced diffs, and runs lint, typecheck, build, and package.
+- If a PR changes published code under `src/lib/**` or `package.json`, run `npm run changeset` and commit the generated `.changeset/*.md` file.
+- If a PR is docs/CI/dev-only and shouldn’t trigger a release, apply the `skip-release` label.
+- CI mirrors this flow and will gate PRs on missing changesets and uncommitted formatting.

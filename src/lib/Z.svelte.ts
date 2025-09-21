@@ -11,7 +11,7 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 
 		try {
 			setContext('z', this);
-		} catch (error) {
+		} catch {
 			console.error(
 				'Unable to use `setContext`. Please make sure to call `new Z()` in a component or set the context yourself in a component like this:\n\n' +
 					'import { setContext } from "svelte"\n' +

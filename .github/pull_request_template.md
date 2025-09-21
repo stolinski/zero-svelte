@@ -12,4 +12,5 @@ If this PR should not trigger a release, apply the `skip-release` label.
 
 ## Testing
 
+- Run `npm run verify` locally before pushing
 - Steps to verify / screenshots

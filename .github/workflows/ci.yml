@@ -27,12 +27,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Detect source changes (gates changeset)
+      - name: Detect publishable changes (gates changeset)
         uses: tj-actions/changed-files@v45
         id: changed
         with:
           files: |
-            src/**
+            src/lib/**
+            package.json
             !.changeset/**
 
       - name: Check for missing changeset

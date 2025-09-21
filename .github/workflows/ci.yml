@@ -3,6 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -38,7 +39,7 @@ jobs:
 
       - name: Check for missing changeset
         id: need_changeset
-        if: ${{ steps.changed.outputs.any_changed == 'true' && !contains(github.event.pull_request.labels.*.name, 'skip-release') }}
+        if: ${{ steps.changed.outputs.any_changed == 'true' && !contains(join(github.event.pull_request.labels.*.name, ','), 'skip-release') }}
         run: |
           if [[ -z "$(ls .changeset | grep -E '\.md$' || true)" ]]; then
             echo "missing=true" >> "$GITHUB_OUTPUT"

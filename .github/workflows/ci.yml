@@ -3,6 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -27,18 +28,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Detect source changes (gates changeset)
+      - name: Detect publishable changes (gates changeset)
         uses: tj-actions/changed-files@v45
         id: changed
         with:
           files: |
-            src/**
+            src/lib/**
+            package.json
             !.changeset/**
 
       - name: Check for missing changeset
         id: need_changeset
-        if: ${{ steps.changed.outputs.any_changed == 'true' && !contains(github.event.pull_request.labels.*.name, 'skip-release') }}
+        if: ${{ steps.changed.outputs.any_changed == 'true' && !contains(join(github.event.pull_request.labels.*.name, ','), 'skip-release') }}
         run: |
+          echo "Debug: PR labels: ${{ join(github.event.pull_request.labels.*.name, ',') }}"
+          echo "Debug: any_changed=${{ steps.changed.outputs.any_changed }}"
           if [[ -z "$(ls .changeset | grep -E '\.md$' || true)" ]]; then
             echo "missing=true" >> "$GITHUB_OUTPUT"
           else
@@ -76,6 +80,13 @@ jobs:
             git --no-pager diff --name-only;
             exit 1;
           fi
+
+      - name: Create .env for CI (SvelteKit static env)
+        run: |
+          echo "PUBLIC_SERVER=${{ secrets.PUBLIC_SERVER }}" > .env
+
+      - name: Sync SvelteKit types
+        run: npm run sync
 
       - name: Lint (ESLint)
         run: npm run lint

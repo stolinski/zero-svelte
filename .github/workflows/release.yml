@@ -35,6 +35,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Workaround npm optional deps bug (Rollup native)
+        if: runner.os == 'Linux'
+        run: npm install --no-save --no-package-lock @rollup/rollup-linux-x64-gnu
+
+      - name: Create .env for Release (SvelteKit static env)
+        run: |
+          echo "PUBLIC_SERVER=${{ secrets.PUBLIC_SERVER }}" > .env
+
+      - name: Sync SvelteKit types
+        run: npm run sync
+
       - name: Format (Prettier write)
         run: npm run format
 

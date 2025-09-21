@@ -5,12 +5,15 @@
 import {
 	ANYONE_CAN_DO_ANYTHING,
 	boolean,
+	createBuilder,
 	createSchema,
 	definePermissions,
 	relationships,
 	string,
+	syncedQuery,
 	table
 } from '@rocicorp/zero';
+import { z as zod } from 'zod';
 
 const types = table('type')
 	.columns({
@@ -54,3 +57,11 @@ export const permissions = definePermissions<AuthData, Schema>(schema, () => {
 		type: ANYONE_CAN_DO_ANYTHING
 	};
 });
+
+export const builder = createBuilder(schema);
+
+export const queries = {
+	allTypes: syncedQuery('allTypes', zod.tuple([]), () => {
+		return builder.type;
+	})
+};

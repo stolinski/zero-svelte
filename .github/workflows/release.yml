@@ -35,6 +35,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Workaround npm optional deps bug (Rollup native)
+        if: runner.os == 'Linux'
+        run: npm install --no-save --no-package-lock @rollup/rollup-linux-x64-gnu
+
       - name: Format (Prettier write)
         run: npm run format
 
@@ -59,6 +63,10 @@ jobs:
 
       - name: Reinstall (in case lockfile changed)
         run: npm ci
+
+      - name: Workaround npm optional deps bug (Rollup native)
+        if: runner.os == 'Linux'
+        run: npm install --no-save --no-package-lock @rollup/rollup-linux-x64-gnu
 
       - name: Publish to npm
         run: npm run release

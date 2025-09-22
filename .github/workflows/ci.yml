@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: ['**']
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, labeled, unlabeled]
@@ -12,6 +14,7 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  checks: write
 
 jobs:
   checks:
@@ -19,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -94,6 +99,32 @@ jobs:
 
       - name: Lint (ESLint)
         run: npm run lint
+
+      - name: Prepare report directories
+        run: mkdir -p reports
+
+      - name: Test (Vitest)
+        env:
+          CI: 'true'
+        run: npm test -- --reporter=junit --outputFile=./reports/junit.xml
+
+      - name: Publish test results (GitHub Checks)
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Vitest Results
+          path: reports/junit.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Upload test report (JUnit)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-report
+          path: reports/junit.xml
+          if-no-files-found: warn
+
       - run: npm run check
       - run: npm run build
       - run: npm run package

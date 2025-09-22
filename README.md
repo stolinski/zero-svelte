@@ -42,13 +42,14 @@ export const z = new Z<Schema>(get_z_options());
 export const ssr = false;
 ```
 
-+page.svelte
++page.svelte (basic example)
 
 ```svelte
 <script lang="ts">
 	import { Query } from 'zero-svelte';
 	import { z } from '$lib/z.svelte';
 
+	// Basic: always enabled; materializes immediately
 	const todos = new Query(z.current.query.todo);
 
 	const randID = () => Math.random().toString(36).slice(2);
@@ -73,6 +74,62 @@ export const ssr = false;
 </script>
 
 <div>
+	<h1>Todo</h1>
+	<form {onsubmit}>
+		<input type="text" id="newTodo" name="newTodo" />
+		<button type="submit">Add</button>
+	</form>
+	<ul>
+		{#each todos.current as todo}
+			<li>
+				<input
+					type="checkbox"
+					value={todo.id}
+					checked={todo.completed}
+					oninput={toggleTodo}
+				/>{todo.title}
+			</li>
+		{/each}
+	</ul>
+</div>
+```
+
++page.svelte (optional: enabled gating)
+
+```svelte
+<script lang="ts">
+	import { Query } from 'zero-svelte';
+	import { z } from '$lib/z.svelte';
+
+	// Gate materialization using the `enabled` flag.
+	// When false, the query won't materialize or register listeners,
+	// and `current` will be the default snapshot until re-enabled.
+	let todosEnabled = $state(true);
+	const todos = $derived.by(() => new Query(z.current.query.todo, todosEnabled));
+
+	const randID = () => Math.random().toString(36).slice(2);
+	function onsubmit(event: Event) {
+		event.preventDefault();
+		const formData = new FormData(event.target as HTMLFormElement);
+		const newTodo = formData.get('newTodo') as string;
+		const id = randID();
+		if (newTodo) {
+			z.current.mutate.todo.insert({ id, title: newTodo, completed: false });
+			(event.target as HTMLFormElement).reset();
+		}
+	}
+	function toggleTodo(event: Event) {
+		const checkbox = event.target as HTMLInputElement;
+		const id = checkbox.value;
+		const completed = checkbox.checked;
+		z.current.mutate.todo.update({ id, completed });
+	}
+</script>
+
+<div>
+	<label>
+		<input type="checkbox" bind:checked={todosEnabled} /> Enable todos query
+	</label>
 	<h1>Todo</h1>
 	<form {onsubmit}>
 		<input type="text" id="newTodo" name="newTodo" />

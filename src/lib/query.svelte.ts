@@ -42,7 +42,8 @@ class ViewWrapper<
 		private z: Z<Schema>,
 		private query: QueryDef<TSchema, TTable, TReturn>,
 		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn>) => void,
-		private onDematerialized: () => void
+		private onDematerialized: () => void,
+		private enabled: boolean
 	) {
 		// Initialize the data based on format
 		this.#data = { '': this.query.format.singular ? undefined : [] };
@@ -86,6 +87,7 @@ class ViewWrapper<
 	};
 
 	#materializeIfNeeded() {
+		if (!this.enabled) return;
 		if (!this.#view) {
 			this.#view = this.z.current.materialize(this.query);
 			this.onMaterialized(this);
@@ -114,7 +116,8 @@ class ViewStore {
 				z,
 				query,
 				() => {},
-				() => {}
+				() => {},
+				false
 			);
 		}
 
@@ -133,7 +136,8 @@ class ViewStore {
 					}
 					this.#views.set(hash, view);
 				},
-				() => this.#views.delete(hash)
+				() => this.#views.delete(hash),
+				true
 			);
 			this.#views.set(hash, existing);
 		}

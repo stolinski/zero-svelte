@@ -77,15 +77,15 @@ describe('Query (current behavior)', () => {
 		expect(stub2.created.length).toBe(1);
 	});
 
-	it('does not create a shared view when enabled=false (per-host materialization)', async () => {
+	it('does not materialize when enabled=false', async () => {
 		const stub = makeZStub({ userID: 'user-2' });
 		const query = makeQuery<{ id: number }>({ singular: true, hash: 'H2' });
 
 		render(QueryHost, { props: { z: stub.z, query, enabled: false } });
 		render(QueryHost, { props: { z: stub.z, query, enabled: false } });
 
-		// Disabled queries are not cached/shared; each host materializes independently
-		expect(stub.created.length).toBe(2);
+		// Disabled queries should not materialize at all
+		expect(stub.created.length).toBe(0);
 	});
 
 	it('emitted objects are cloned; mutating source does not affect current', async () => {
@@ -201,7 +201,7 @@ describe('Query (current behavior)', () => {
 		expect(oldTv.destroyed).toBe(true);
 	});
 
-	it('toggle enabled false/true switches between per-host and shared views', async () => {
+	it('toggle enabled false/true switches between disabled and shared views', async () => {
 		const stub = makeZStub();
 		const query = makeQuery<{ id: number }>({ singular: true, hash: 'T1' });
 
@@ -227,17 +227,17 @@ describe('Query (current behavior)', () => {
 		expect(stub.created.length).toBe(1);
 		const sharedTv = stub.created[0].tv;
 
-		// Disable sharing (per-host view)
+		// Disable materialization
 		update!(query, false);
 		await Promise.resolve();
-		expect(stub.created.length).toBe(2);
+		// No new materialization when disabled
+		expect(stub.created.length).toBe(1);
 		expect(sharedTv.destroyed).toBe(true);
-		const perHostTv = stub.created[1].tv;
 
 		// Re-enable sharing (new shared view)
 		update!(query, true);
 		await Promise.resolve();
-		expect(stub.created.length).toBe(3);
-		expect(perHostTv.destroyed).toBe(true);
+		expect(stub.created.length).toBe(2);
+		expect(stub.created[1].tv.destroyed).toBe(false);
 	});
 });

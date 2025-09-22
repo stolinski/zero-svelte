@@ -102,8 +102,7 @@ class ViewWrapper<
 }
 
 class ViewStore {
-	// eslint-disable-next-line
-	#views = new Map<string, ViewWrapper<any, any, any>>();
+	#views = new Map<string, unknown>();
 
 	getView<TSchema extends Schema, TTable extends keyof TSchema['tables'] & string, TReturn>(
 		z: Z<Schema>,
@@ -121,7 +120,7 @@ class ViewStore {
 
 		const id = z?.current?.userID ? z?.current.userID : 'anon';
 		const hash = query.hash() + id;
-		let existing = this.#views.get(hash);
+		let existing = this.#views.get(hash) as ViewWrapper<TSchema, TTable, TReturn> | undefined;
 
 		if (!existing) {
 			existing = new ViewWrapper(
@@ -153,33 +152,31 @@ export class Query<
 	current = $state<HumanReadable<TReturn>>(null!);
 	details = $state<QueryResultDetails>(null!);
 	#query_impl: QueryDef<TSchema, TTable, TReturn>;
-	#view: ViewWrapper<TSchema, TTable, TReturn> | undefined;
+	view = $state<ViewWrapper<TSchema, TTable, TReturn> | undefined>(undefined);
+	#z: Z<Schema>;
 
 	constructor(query: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
-		const z = getContext('z') as Z<Schema>;
+		this.#z = getContext('z') as Z<Schema>;
 		this.#query_impl = query as unknown as QueryDef<TSchema, TTable, TReturn>;
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
 		this.current = default_snapshot[0] as HumanReadable<TReturn>;
 		this.details = default_snapshot[1];
-		this.#view = viewStore.getView(z, this.#query_impl, enabled);
-		this.current = this.#view.current[0];
-		this.details = this.#view.current[1];
+		this.view = viewStore.getView(this.#z, this.#query_impl, enabled);
 
-		// Watch for changes in the query
+		// Watch for changes in the query and (re)subscribe
 		$effect(() => {
-			if (this.#view) {
-				this.current = this.#view.current[0];
-				this.details = this.#view.current[1];
+			const v = this.view;
+			if (v) {
+				const [data, details] = v.current;
+				this.current = data;
+				this.details = details;
 			}
 		});
 	}
 
 	// Method to update the query
 	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
-		const z = getContext('z') as Z<Schema>;
 		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
-		this.#view = viewStore.getView(z, this.#query_impl, enabled);
-		this.current = this.#view.current[0];
-		this.details = this.#view.current[1];
+		this.view = viewStore.getView(this.#z, this.#query_impl, enabled);
 	}
 }

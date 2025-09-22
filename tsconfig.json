@@ -11,5 +11,6 @@
 		"strict": true,
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext"
-	}
+	},
+	"exclude": ["node_modules", "tests", "**/*.test.*", "**/*.spec.*"]
 }

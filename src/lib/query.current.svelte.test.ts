@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
-import { tick } from 'svelte';
 import QueryHost from '../../tests/harness/QueryHost.svelte';
 import type { Query as QueryDef, Schema } from '@rocicorp/zero';
 import { makeZStub } from '../../tests/harness/fakes.js';
@@ -13,7 +12,7 @@ function makeQuery<T>(opts: { singular?: boolean; hash?: string } = {}) {
 		hash() {
 			return hashVal;
 		}
-	} as unknown as QueryDef<Schema, any, T>;
+	} as unknown as QueryDef<Schema, string & keyof Schema['tables'], T>;
 }
 
 describe('Query (current behavior)', () => {
@@ -23,7 +22,7 @@ describe('Query (current behavior)', () => {
 
 	it('provides default snapshots before materialization emits (singular)', async () => {
 		const stub = makeZStub();
-		const query = makeQuery<{ id: number } & any>({ singular: true, hash: 'A' });
+		const query = makeQuery<{ id: number }>({ singular: true, hash: 'A' });
 
 		render(QueryHost, { props: { z: stub.z, query, enabled: true } });
 
@@ -32,7 +31,7 @@ describe('Query (current behavior)', () => {
 		expect(await screen.findByTestId('details')).toHaveTextContent('"unknown"');
 
 		// Emit a value from the typed view after materialization occurred
-		stub.last.emit({ id: 1 } as any, 'complete');
+		stub.last.emit({ id: 1 }, 'complete');
 
 		expect(await screen.findByTestId('data')).toHaveTextContent('{"id":1}');
 		expect(await screen.findByTestId('details')).toHaveTextContent('"complete"');
@@ -49,7 +48,7 @@ describe('Query (current behavior)', () => {
 		expect(await screen.findByTestId('details')).toHaveTextContent('"unknown"');
 
 		// Emit a value from the typed view after materialization
-		stub.last.emit([{ id: 2 }] as any, 'complete');
+		stub.last.emit([{ id: 2 }], 'complete');
 
 		expect(await screen.findByTestId('data')).toHaveTextContent('[{"id":2}]');
 		expect(await screen.findByTestId('details')).toHaveTextContent('"complete"');
@@ -95,7 +94,7 @@ describe('Query (current behavior)', () => {
 
 		render(QueryHost, { props: { z: stub.z, query, enabled: true } });
 
-		const obj: any = { nested: { count: 1 } };
+		const obj: { nested: { count: number } } = { nested: { count: 1 } };
 		stub.last.emit(obj, 'complete');
 		// Mutate the original after emission
 		obj.nested.count = 999;
@@ -144,15 +143,20 @@ describe('Query (current behavior)', () => {
 		const stub = makeZStub();
 		const query = makeQuery<{ id: number }>({ singular: true, hash: 'U1' });
 
-		let update: ((q: QueryDef<any, any, any>, enabled?: boolean) => void) | undefined;
+		let update:
+			| ((q: QueryDef<Schema, string & keyof Schema['tables'], unknown>, enabled?: boolean) => void)
+			| undefined;
 		render(QueryHost, {
 			props: {
 				z: stub.z,
 				query,
 				enabled: true,
 				register: (api: {
-					updateQuery: (q: QueryDef<any, any, any>, enabled?: boolean) => void;
-					z: any;
+					updateQuery: (
+						q: QueryDef<Schema, string & keyof Schema['tables'], unknown>,
+						enabled?: boolean
+					) => void;
+					z: unknown;
 				}) => (update = api.updateQuery)
 			}
 		});
@@ -168,15 +172,20 @@ describe('Query (current behavior)', () => {
 		const stub = makeZStub();
 		const query = makeQuery<{ id: number }>({ singular: true, hash: 'U2' });
 
-		let update: ((q: QueryDef<any, any, any>, enabled?: boolean) => void) | undefined;
+		let update:
+			| ((q: QueryDef<Schema, string & keyof Schema['tables'], unknown>, enabled?: boolean) => void)
+			| undefined;
 		render(QueryHost, {
 			props: {
 				z: stub.z,
 				query,
 				enabled: true,
 				register: (api: {
-					updateQuery: (q: QueryDef<any, any, any>, enabled?: boolean) => void;
-					z: any;
+					updateQuery: (
+						q: QueryDef<Schema, string & keyof Schema['tables'], unknown>,
+						enabled?: boolean
+					) => void;
+					z: unknown;
 				}) => (update = api.updateQuery)
 			}
 		});
@@ -196,15 +205,20 @@ describe('Query (current behavior)', () => {
 		const stub = makeZStub();
 		const query = makeQuery<{ id: number }>({ singular: true, hash: 'T1' });
 
-		let update: ((q: QueryDef<any, any, any>, enabled?: boolean) => void) | undefined;
+		let update:
+			| ((q: QueryDef<Schema, string & keyof Schema['tables'], unknown>, enabled?: boolean) => void)
+			| undefined;
 		render(QueryHost, {
 			props: {
 				z: stub.z,
 				query,
 				enabled: true,
 				register: (api: {
-					updateQuery: (q: QueryDef<any, any, any>, enabled?: boolean) => void;
-					z: any;
+					updateQuery: (
+						q: QueryDef<Schema, string & keyof Schema['tables'], unknown>,
+						enabled?: boolean
+					) => void;
+					z: unknown;
 				}) => (update = api.updateQuery)
 			}
 		});

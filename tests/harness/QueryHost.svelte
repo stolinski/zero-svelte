@@ -1,9 +1,16 @@
 <script lang="ts">
 	import { setContext } from 'svelte';
 	import { Query } from '$lib/query.svelte';
-	import type { Query as QueryDef } from '@rocicorp/zero';
+	import type { Query as QueryDef, Schema, TypedView } from '@rocicorp/zero';
 
-	type ZStub = { current: { materialize: (q: any) => any; userID?: string } };
+	type ZStub = {
+		current: {
+			materialize: (
+				q: QueryDef<Schema, string & keyof Schema['tables'], unknown>
+			) => TypedView<unknown>;
+			userID?: string;
+		};
+	};
 
 	const {
 		z,
@@ -12,16 +19,19 @@
 		register
 	} = $props<{
 		z: ZStub;
-		query: QueryDef<any, any, any>;
+		query: QueryDef<Schema, string & keyof Schema['tables'], unknown>;
 		enabled?: boolean;
 		register?: (api: {
-			updateQuery: (q: QueryDef<any, any, any>, enabled?: boolean) => void;
+			updateQuery: (
+				q: QueryDef<Schema, string & keyof Schema['tables'], unknown>,
+				enabled?: boolean
+			) => void;
 			z: ZStub;
 		}) => void;
 	}>();
 
 	setContext('z', z);
-	const q = new Query<any, any, any>(query, enabled);
+	const q = new Query<Schema, string & keyof Schema['tables'], unknown>(query, enabled);
 
 	register?.({
 		updateQuery: (newQ, en = true) => q.updateQuery(newQ, en),

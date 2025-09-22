@@ -3,7 +3,7 @@
 export type ResultType = 'unknown' | 'complete';
 export type Listener = (data: unknown, resultType: ResultType) => void;
 
-export function makeTypedViewStub<T = any>() {
+export function makeTypedViewStub<T = unknown>() {
 	const listeners: Listener[] = [];
 	let destroyed = false;
 	let data: T | undefined;
@@ -24,11 +24,11 @@ export function makeTypedViewStub<T = any>() {
 		get data() {
 			return data as T;
 		}
-	} as any;
+	};
 
 	function emit(value: T, resultType: ResultType = 'complete') {
 		data = value;
-		for (const l of listeners) l(value, resultType);
+		for (const l of listeners) l(value as unknown, resultType);
 	}
 
 	return {
@@ -41,13 +41,13 @@ export function makeTypedViewStub<T = any>() {
 }
 
 export function makeZStub(opts?: { userID?: string }) {
-	const created: Array<{ query: any; tv: ReturnType<typeof makeTypedViewStub> }> = [];
+	const created: Array<{ query: unknown; tv: ReturnType<typeof makeTypedViewStub> }> = [];
 	let last: ReturnType<typeof makeTypedViewStub> | undefined;
 
 	const z = {
 		current: {
 			userID: opts?.userID,
-			materialize(query: any) {
+			materialize(query: unknown) {
 				const tv = makeTypedViewStub();
 				created.push({ query, tv });
 				last = tv;
@@ -55,7 +55,7 @@ export function makeZStub(opts?: { userID?: string }) {
 			},
 			close() {}
 		}
-	} as any;
+	};
 
 	return {
 		z,

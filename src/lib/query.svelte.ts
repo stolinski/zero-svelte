@@ -102,8 +102,7 @@ class ViewWrapper<
 }
 
 class ViewStore {
-	// eslint-disable-next-line
-	#views = new Map<string, ViewWrapper<any, any, any>>();
+	#views = new Map<string, unknown>();
 
 	getView<TSchema extends Schema, TTable extends keyof TSchema['tables'] & string, TReturn>(
 		z: Z<Schema>,
@@ -121,7 +120,7 @@ class ViewStore {
 
 		const id = z?.current?.userID ? z?.current.userID : 'anon';
 		const hash = query.hash() + id;
-		let existing = this.#views.get(hash);
+		let existing = this.#views.get(hash) as ViewWrapper<TSchema, TTable, TReturn> | undefined;
 
 		if (!existing) {
 			existing = new ViewWrapper(

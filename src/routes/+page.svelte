@@ -12,14 +12,11 @@
 		kvStore: 'mem'
 	});
 
-	let filtered_type: string | undefined = $state();
-
 	// Stable Query instance; update when filter changes via event
 	const todos = new Query(z.current.query.todo.related('type'));
 
 	function applyFilter(value: string) {
 		const ft = value || undefined;
-		filtered_type = ft;
 		const q = ft
 			? z.current.query.todo.where('type_id', '=', ft).related('type')
 			: z.current.query.todo.related('type');

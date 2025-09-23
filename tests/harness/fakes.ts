@@ -6,11 +6,9 @@ export type Listener = (data: unknown, resultType: ResultType) => void;
 function deepFreeze<T>(obj: T): T {
 	if (obj === null || typeof obj !== 'object') return obj;
 	if (Object.isFrozen(obj)) return obj;
-	// @ts-ignore - runtime deep freeze
-	for (const key of Object.keys(obj)) {
-		// @ts-ignore
-		const val = obj[key];
-		deepFreeze(val);
+	for (const key of Object.keys(obj as Record<string, unknown>)) {
+		const val = (obj as Record<string, unknown>)[key];
+		deepFreeze(val as unknown as T);
 	}
 	return Object.freeze(obj as object) as T;
 }

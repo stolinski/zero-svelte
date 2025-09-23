@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { setContext } from 'svelte';
-	import { Query } from '$lib/query.svelte';
+	import { Query } from '$lib/query.svelte.js';
 	import type { Query as QueryDef, Schema, TypedView } from '@rocicorp/zero';
 
 	type ZStub = {
 		current: {
-			materialize: (q: QueryDef<Schema, string & keyof Schema['tables'], any>) => TypedView<any>;
+			materialize: (
+				q: QueryDef<Schema, string & keyof Schema['tables'], unknown>
+			) => TypedView<unknown>;
 			userID?: string;
 		};
 	};
@@ -17,11 +19,11 @@
 		register
 	} = $props<{
 		z: ZStub;
-		query: QueryDef<Schema, string & keyof Schema['tables'], any>;
+		query: QueryDef<Schema, string & keyof Schema['tables'], unknown>;
 		enabled?: boolean;
 		register?: (api: {
 			updateQuery: (
-				q: QueryDef<Schema, string & keyof Schema['tables'], any>,
+				q: QueryDef<Schema, string & keyof Schema['tables'], unknown>,
 				enabled?: boolean
 			) => void;
 			z: ZStub;
@@ -29,10 +31,11 @@
 	}>();
 
 	setContext('z', z);
-	const q = new Query<Schema, string & keyof Schema['tables'], any>(query, enabled);
+	const q = new Query<Schema, string & keyof Schema['tables'], unknown>(query, enabled);
 
 	register?.({
-		updateQuery: (newQ, en = true) => q.updateQuery(newQ, en),
+		updateQuery: (newQ: QueryDef<Schema, string & keyof Schema['tables'], unknown>, en = true) =>
+			q.updateQuery(newQ, en),
 		z
 	});
 </script>

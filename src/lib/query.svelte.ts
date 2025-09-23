@@ -1,17 +1,7 @@
-import type {
-	Entry,
-	HumanReadable,
-	Query as QueryDef,
-	ReadonlyJSONValue,
-	Schema,
-	TypedView
-} from '@rocicorp/zero';
+import type { Entry, HumanReadable, Query as QueryDef, Schema, TypedView } from '@rocicorp/zero';
 import { getContext } from 'svelte';
 import { createSubscriber } from 'svelte/reactivity';
 import type { Z } from './Z.svelte.js';
-// Not sure why, TS doesn't really want to allow the import using @rocicorp/zero directly
-// this should end up as './shared/immutable.js
-import type { Immutable } from '../../node_modules/@rocicorp/zero/out/shared/src/immutable.d.ts';
 
 export type ResultType = 'unknown' | 'complete';
 export type QueryResultDetails = { type: ResultType };
@@ -56,7 +46,7 @@ class ViewWrapper<
 			if (this.#view) {
 				// Listen for updates from the underlying TypedView and notify Svelte
 				removeListener = this.#view.addListener((snap, resultType) => {
-					this.#onData(snap, resultType);
+					this.#onData(snap as unknown as HumanReadable<TReturn> | undefined, resultType);
 					notify();
 				});
 			}
@@ -73,19 +63,15 @@ class ViewWrapper<
 	}
 
 	#onData = (
-		snap: Immutable<HumanReadable<TReturn>>,
+		snap: HumanReadable<TReturn> | undefined,
 		resultType: ResultType
 		// update: () => void // not used??
 	) => {
-		const data =
-			snap === undefined
-				? snap
-				: (structuredClone(snap as ReadonlyJSONValue) as HumanReadable<TReturn>);
 		// Clear old references
 		this.#refCountMap.delete(this.#data);
 
-		// Update data and track new references
-		this.#data = { '': data };
+		// Update data and track new references; snapshots from Zero are immutable
+		this.#data = { '': snap as HumanReadable<TReturn> };
 		this.#refCountMap.set(this.#data, 1);
 
 		this.#status = { type: resultType };

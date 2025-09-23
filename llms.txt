@@ -1,0 +1,51 @@
+Zero Svelte (zero-svelte)
+
+What this library is:
+- Svelte 5 bindings for @rocicorp/zero, a local-first sync database.
+- Provides a thin Svelte-friendly wrapper so Zero queries become reactive in components.
+- Exposes two main APIs:
+  - Z: owns a Zero instance and places it in Svelte context under the key "z".
+  - Query: materializes a Zero query and returns a reactive snapshot for rendering.
+
+When to use it:
+- Build Svelte apps that are local-first, offline-capable, with optimistic updates and automatic sync via Zero.
+
+Install:
+- npm install zero-svelte (peer: Svelte 5+, Node 22+)
+- Follow Zero docs to set up schema, server URL, and environment.
+
+Basic setup:
+- Define your Zero Schema type (e.g., export type Schema = typeof schema).
+- Create a single Z<Schema>(options) with userID, server, and schema.
+- Instantiate Z in a Svelte component so it can call setContext('z', z) automatically. If you instantiate elsewhere, manually call setContext('z', z) in a component.
+- In SvelteKit, disable SSR where you use Zero (e.g., +layout.server.ts → export const ssr = false).
+
+Using queries:
+- Construct a Query with a Zero query definition, e.g., new Query(z.current.query.todo).
+- Read the current snapshot from query.current in your template; it updates automatically as data changes.
+- Check query.details.type to see materialization status ("unknown" → "complete").
+- Gate work until needed by passing enabled=false: new Query(..., false), then enable later.
+- If your query definition changes (e.g., parameters), call updateQuery(newQuery, enabled?).
+
+Mutations:
+- Use Zero’s standard mutators via the wrapped instance, e.g., z.current.mutate.todo.insert|update|delete(...).
+- This library does not change Zero’s query/mutator APIs; it only wires them into Svelte reactivity.
+
+Lifecycle:
+- Rebuild the underlying Zero instance when auth/config changes with z.build(newOptions).
+- Close the instance when done with z.close().
+
+Types:
+- Use Z and Query with your Schema type for fully typed queries and mutations. Types are preserved from @rocicorp/zero.
+
+Notes:
+- Client-only usage; keep SSR disabled where used.
+- Internally, views are shared by (query.hash + userID) to avoid redundant materialization across components.
+
+Quick mental model:
+- Z is "your Zero in Svelte context" at z.current.
+- Query bridges "Zero query" → "reactive data you can render".
+- Mutations go through z.current.mutate.* and update any materialized queries.
+
+Learn more:
+- Zero docs: https://zero.rocicorp.dev/docs/introduction

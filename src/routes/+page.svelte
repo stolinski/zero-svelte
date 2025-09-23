@@ -14,13 +14,18 @@
 
 	let filtered_type: string | undefined = $state();
 
-	// We wrap the query in a $derived.by or a $derived to update whenever a reactive var updates.
-	const todos = $derived.by(() => {
-		if (filtered_type) {
-			return new Query(z.current.query.todo.where('type_id', '=', filtered_type).related('type'));
-		}
-		return new Query(z.current.query.todo.related('type'));
-	});
+	// Stable Query instance; update when filter changes via event
+	const todos = new Query(z.current.query.todo.related('type'));
+
+	function applyFilter(value: string) {
+		const ft = value || undefined;
+		filtered_type = ft;
+		const q = ft
+			? z.current.query.todo.where('type_id', '=', ft).related('type')
+			: z.current.query.todo.related('type');
+		todos.updateQuery(q);
+	}
+
 	// Basic query, reactive by default
 	const types = new Query(queries.allTypes());
 
@@ -72,7 +77,12 @@
 		<button type="submit">Add</button>
 	</form>
 	<h1>Todos</h1>
-	<select bind:value={filtered_type} name="todo_type" id="todo_type">
+	<select
+		name="todo_type"
+		id="todo_type"
+		onchange={(e) => applyFilter((e.target as HTMLSelectElement).value)}
+	>
+		<option value="">All</option>
 		{#each types.current as type (type.id + 'option-list')}
 			<option value={type.id}>{type.name}</option>
 		{/each}

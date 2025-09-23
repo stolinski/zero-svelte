@@ -5,9 +5,7 @@
 
 	type ZStub = {
 		current: {
-			materialize: (
-				q: QueryDef<Schema, string & keyof Schema['tables'], unknown>
-			) => TypedView<unknown>;
+			materialize: (q: QueryDef<Schema, string & keyof Schema['tables'], any>) => TypedView<any>;
 			userID?: string;
 		};
 	};
@@ -19,11 +17,11 @@
 		register
 	} = $props<{
 		z: ZStub;
-		query: QueryDef<Schema, string & keyof Schema['tables'], unknown>;
+		query: QueryDef<Schema, string & keyof Schema['tables'], any>;
 		enabled?: boolean;
 		register?: (api: {
 			updateQuery: (
-				q: QueryDef<Schema, string & keyof Schema['tables'], unknown>,
+				q: QueryDef<Schema, string & keyof Schema['tables'], any>,
 				enabled?: boolean
 			) => void;
 			z: ZStub;
@@ -31,7 +29,7 @@
 	}>();
 
 	setContext('z', z);
-	const q = new Query<Schema, string & keyof Schema['tables'], unknown>(query, enabled);
+	const q = new Query<Schema, string & keyof Schema['tables'], any>(query, enabled);
 
 	register?.({
 		updateQuery: (newQ, en = true) => q.updateQuery(newQ, en),

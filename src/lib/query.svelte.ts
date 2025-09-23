@@ -49,17 +49,22 @@ class ViewWrapper<
 		this.#data = { '': this.query.format.singular ? undefined : [] };
 
 		// Create a subscriber that manages view lifecycle
-		this.#subscribe = createSubscriber(() => {
+		this.#subscribe = createSubscriber((notify) => {
 			this.#materializeIfNeeded();
 
+			let removeListener: (() => void) | undefined;
 			if (this.#view) {
-				// Pass the update function to onData so it can notify Svelte of changes
-				this.#view.addListener((snap, resultType) => this.#onData(snap, resultType));
+				// Listen for updates from the underlying TypedView and notify Svelte
+				removeListener = this.#view.addListener((snap, resultType) => {
+					this.#onData(snap, resultType);
+					notify();
+				});
 			}
 
 			// Return cleanup function that will only be called
 			// when all effects are destroyed
 			return () => {
+				removeListener?.();
 				this.#view?.destroy();
 				this.#view = undefined;
 				this.onDematerialized();

@@ -88,7 +88,7 @@ describe('Query (current behavior)', () => {
 		expect(stub.created.length).toBe(0);
 	});
 
-	it('emitted objects are cloned; mutating source does not affect current', async () => {
+	it('emitted objects are passed through (snapshots are immutable); mutating source does not affect current', async () => {
 		const stub = makeZStub();
 		const query = makeQuery<{ nested: { count: number } }>({ singular: true, hash: 'C' });
 
@@ -96,7 +96,7 @@ describe('Query (current behavior)', () => {
 
 		const obj: { nested: { count: number } } = { nested: { count: 1 } };
 		stub.last.emit(obj, 'complete');
-		// Mutate the original after emission
+		// Mutate the original after emission; snapshot should be unaffected
 		obj.nested.count = 999;
 
 		const dataEl = await screen.findByTestId('data');
@@ -239,5 +239,78 @@ describe('Query (current behavior)', () => {
 		await Promise.resolve();
 		expect(stub.created.length).toBe(2);
 		expect(stub.created[1].tv.destroyed).toBe(false);
+	});
+
+	// Additional coverage for #2 (re-subscription behavior)
+	it('re-subscribes after updateQuery with new hash: new emissions update DOM', async () => {
+		const stub = makeZStub();
+		const q1 = makeQuery<{ id: number }>({ singular: true, hash: 'RS-1' });
+
+		let update:
+			| ((q: QueryDef<Schema, string & keyof Schema['tables'], unknown>, enabled?: boolean) => void)
+			| undefined;
+		render(QueryHost, {
+			props: {
+				z: stub.z,
+				query: q1,
+				enabled: true,
+				register: (api: {
+					updateQuery: (
+						q: QueryDef<Schema, string & keyof Schema['tables'], unknown>,
+						enabled?: boolean
+					) => void;
+					z: unknown;
+				}) => (update = api.updateQuery)
+			}
+		});
+
+		// Emit initial value from first view
+		stub.last.emit({ id: 1 }, 'complete');
+		expect(await screen.findByTestId('data')).toHaveTextContent('{"id":1}');
+
+		// Switch to a new query (new hash -> new view)
+		const q2 = makeQuery<{ id: number }>({ singular: true, hash: 'RS-2' });
+		update!(q2, true);
+		await Promise.resolve();
+
+		// Emit from the new view and verify DOM updates
+		stub.last.emit({ id: 2 }, 'complete');
+		expect(await screen.findByTestId('data')).toHaveTextContent('{"id":2}');
+	});
+
+	it('keeps subscription when updating with same hash: emissions still update DOM', async () => {
+		const stub = makeZStub();
+		const q1 = makeQuery<{ id: number }>({ singular: true, hash: 'RS-SAME' });
+
+		let update:
+			| ((q: QueryDef<Schema, string & keyof Schema['tables'], unknown>, enabled?: boolean) => void)
+			| undefined;
+		render(QueryHost, {
+			props: {
+				z: stub.z,
+				query: q1,
+				enabled: true,
+				register: (api: {
+					updateQuery: (
+						q: QueryDef<Schema, string & keyof Schema['tables'], unknown>,
+						enabled?: boolean
+					) => void;
+					z: unknown;
+				}) => (update = api.updateQuery)
+			}
+		});
+
+		// Emit initial value
+		stub.last.emit({ id: 10 }, 'complete');
+		expect(await screen.findByTestId('data')).toHaveTextContent('{"id":10}');
+
+		// Update with a different object but same hash (reuse view)
+		const qSame = makeQuery<{ id: number }>({ singular: true, hash: 'RS-SAME' });
+		update!(qSame, true);
+		await Promise.resolve();
+
+		// Emit again; should still update the DOM
+		stub.last.emit({ id: 11 }, 'complete');
+		expect(await screen.findByTestId('data')).toHaveTextContent('{"id":11}');
 	});
 });

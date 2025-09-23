@@ -150,6 +150,50 @@ export const ssr = false;
 </div>
 ```
 
+### +page.svelte (filtering with updateQuery and a stable Query)
+
+Use a single `Query` instance and update it in response to user input. This avoids recreating queries on reactive changes and prevents double updates when options load.
+
+```svelte
+<script lang="ts">
+	import { Query } from 'zero-svelte';
+	import { z } from '$lib/z.svelte';
+	import { queries } from '$lib/schema.js'; // adjust path to your schema/queries
+
+	let filtered_type: string | undefined = $state();
+
+	// Create once
+	const todos = new Query(z.current.query.todo.related('type'));
+	const types = new Query(queries.allTypes());
+
+	function applyFilter(value: string) {
+		const ft = value || undefined;
+		filtered_type = ft;
+		const q = ft
+			? z.current.query.todo.where('type_id', '=', ft).related('type')
+			: z.current.query.todo.related('type');
+		todos.updateQuery(q);
+	}
+</script>
+
+<select
+	name="todo_type"
+	id="todo_type"
+	onchange={(e) => applyFilter((e.target as HTMLSelectElement).value)}
+>
+	<option value="">All</option>
+	{#each types.current as type (type.id)}
+		<option value={type.id}>{type.name}</option>
+	{/each}
+</select>
+
+<ul>
+	{#each todos.current as todo (todo.id)}
+		<li>{todo.title} - {todo.type?.name}</li>
+	{/each}
+</ul>
+```
+
 "todos" here is now reactive and will stay in sync with the persistent db and local data.
 
 Mutations & queries are done with just standard Zero.

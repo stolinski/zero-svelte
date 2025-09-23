@@ -2,7 +2,9 @@ import { withValidation, type ReadonlyJSONValue } from '@rocicorp/zero';
 import { handleGetQueriesRequest } from '@rocicorp/zero/server';
 import { queries, schema } from '../../../schema.js';
 
-export async function POST({ request }) {
+import type { RequestEvent } from '@sveltejs/kit';
+
+export async function POST({ request }: RequestEvent) {
 	const q = await handleGetQueriesRequest(getQuery, schema, request);
 
 	return new Response(JSON.stringify(q));

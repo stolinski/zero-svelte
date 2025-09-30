@@ -1,5 +1,11 @@
 # zero-svelte
 
+## 0.6.1
+
+### Patch Changes
+
+- [#43](https://github.com/stolinski/zero-svelte/pull/43) [`5747e0a`](https://github.com/stolinski/zero-svelte/commit/5747e0ad59de4a4b462892b54544d3874d986297) Thanks [@stolinski](https://github.com/stolinski)! - Avoid deep cloning Zero snapshots in the Query listener and remove the internal `Immutable` type import. Trust Zero’s deep-frozen snapshots and keep reactivity by replacing the container object and calling `notify()`. This improves performance (CPU/GC) without changing the public API.
+
 ## 0.6.0
 
 ### Minor Changes

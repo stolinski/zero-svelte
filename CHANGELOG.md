@@ -1,5 +1,11 @@
 # zero-svelte
 
+## 0.6.2
+
+### Patch Changes
+
+- [#44](https://github.com/stolinski/zero-svelte/pull/44) [`d590074`](https://github.com/stolinski/zero-svelte/commit/d59007479d137aff1e2abf98b03462ae7bcf363d) Thanks [@stolinski](https://github.com/stolinski)! - Use clientID instead of userID for query hash calculation
+
 ## 0.6.1
 
 ### Patch Changes

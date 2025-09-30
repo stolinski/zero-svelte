@@ -112,8 +112,7 @@ class ViewStore {
 			);
 		}
 
-		const id = z?.current?.userID ? z?.current.userID : 'anon';
-		const hash = query.hash() + id;
+		const hash = query.hash() + z?.current?.clientID;
 		let existing = this.#views.get(hash) as ViewWrapper<TSchema, TTable, TReturn> | undefined;
 
 		if (!existing) {

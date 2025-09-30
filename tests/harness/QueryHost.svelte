@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { setContext } from 'svelte';
-	import { Query } from '$lib/query.svelte';
+	import { Query } from '$lib/query.svelte.js';
 	import type { Query as QueryDef, Schema, TypedView } from '@rocicorp/zero';
 
 	type ZStub = {
@@ -34,7 +34,8 @@
 	const q = new Query<Schema, string & keyof Schema['tables'], unknown>(query, enabled);
 
 	register?.({
-		updateQuery: (newQ, en = true) => q.updateQuery(newQ, en),
+		updateQuery: (newQ: QueryDef<Schema, string & keyof Schema['tables'], unknown>, en = true) =>
+			q.updateQuery(newQ, en),
 		z
 	});
 </script>

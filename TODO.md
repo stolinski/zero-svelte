@@ -2,43 +2,6 @@
 
 This plan captures the next implementation steps based on prior findings. Each item includes rationale and concrete guidance.
 
-## 1) Enabled gating for queries
-
-- Rationale: `enabled=false` should avoid materialization, network, and listeners.
-- Approach:
-  - Add an `enabled` flag to `ViewWrapper` and guard `#materializeIfNeeded()` so it’s a no-op when disabled.
-  - Ensure `Query` constructor and `updateQuery()` pass the flag and expose default `unknown` snapshot until enabled.
-- Snippet (conceptual):
-
-```ts
-class ViewWrapper<...> {
-  constructor(..., private enabled: boolean) {}
-  #materializeIfNeeded() {
-    if (!this.enabled) return; // don’t materialize
-    if (!this.#view) { this.#view = this.z.current.materialize(this.query); ... }
-  }
-}
-```
-
-## 2) Re-subscription on query change
-
-- Rationale: `updateQuery()` currently replaces the wrapper but the reactive effect only pins to the previous `#view`; ensure the effect tracks the new one or provide guidance to recreate `Query`.
-- Approach:
-  - Keep the effect but reference `this.#view.current` inside so Svelte picks up the dependency.
-  - Alternatively, recommend replacing the `Query` instance instead of `updateQuery` for clarity.
-- Snippet:
-
-```ts
-$effect(() => {
-	const view = this.#view; // dependency
-	if (view) {
-		const [data, details] = view.current;
-		this.current = data;
-		this.details = details;
-	}
-});
-```
-
 ## 3) Remove internal `Immutable` import and avoid cloning
 
 - Rationale: Importing from Zero internals is brittle and `structuredClone` on every update is unnecessary and can be expensive.

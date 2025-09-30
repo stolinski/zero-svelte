@@ -3,6 +3,16 @@
 export type ResultType = 'unknown' | 'complete';
 export type Listener = (data: unknown, resultType: ResultType) => void;
 
+function deepFreeze<T>(obj: T): T {
+	if (obj === null || typeof obj !== 'object') return obj;
+	if (Object.isFrozen(obj)) return obj;
+	for (const key of Object.keys(obj as Record<string, unknown>)) {
+		const val = (obj as Record<string, unknown>)[key];
+		deepFreeze(val as unknown as T);
+	}
+	return Object.freeze(obj as object) as T;
+}
+
 export function makeTypedViewStub<T = unknown>() {
 	const listeners: Listener[] = [];
 	let destroyed = false;
@@ -27,8 +37,10 @@ export function makeTypedViewStub<T = unknown>() {
 	};
 
 	function emit(value: T, resultType: ResultType = 'complete') {
-		data = value;
-		for (const l of listeners) l(value as unknown, resultType);
+		// Mimic Zero snapshots: clone then deep-freeze to ensure immutability
+		const frozen = deepFreeze(structuredClone(value));
+		data = frozen as T;
+		for (const l of listeners) l(frozen as unknown, resultType);
 	}
 
 	return {

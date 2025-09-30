@@ -23,6 +23,7 @@ import { Z } from 'zero-svelte';
 import { schema, type Schema } from '../zero-schema.js';
 // Schema is imported from wherever your Schema type lives.
 // via export type Schema = typeof schema;
+const { children } = $props();
 
 new Z<Schema>({
 	userID: 'anon',
@@ -31,6 +32,8 @@ new Z<Schema>({
 	schema
 	// auth: data.jwt,
 });
+
+{@render children()}
 ```
 
 +layout.server.ts

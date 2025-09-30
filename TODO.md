@@ -1,22 +1,5 @@
 # zero-svelte – TODO
 
-This plan captures the next implementation steps based on prior findings. Each item includes rationale and concrete guidance.
-
-## 3) Remove internal `Immutable` import and avoid cloning
-
-- Rationale: Importing from Zero internals is brittle and `structuredClone` on every update is unnecessary and can be expensive.
-- Approach:
-  - Use only public types (`HumanReadable`, `ReadonlyJSONValue`).
-  - Pass snapshots through directly; they are already frozen/human readable via Zero.
-- Snippet:
-
-```ts
-#onData = (snap: HumanReadable<TReturn> | undefined, resultType: ResultType) => {
-	this.#data = { '': snap as HumanReadable<TReturn> };
-	this.#status = { type: resultType };
-};
-```
-
 ## 4) Context symbol + SSR guard
 
 - Rationale: Avoid context key collisions; prevent instantiation during SSR when not desired.

@@ -15,7 +15,7 @@ Watch this
 1. Install `npm install zero-svelte`
 1. Usage
 
-lib/z.svelte.ts (or whatever you'd like to name)
++layout.svelte
 
 ```ts
 import { PUBLIC_SERVER } from '$env/static/public';
@@ -23,17 +23,17 @@ import { Z } from 'zero-svelte';
 import { schema, type Schema } from '../zero-schema.js';
 // Schema is imported from wherever your Schema type lives.
 // via export type Schema = typeof schema;
+const { children } = $props();
 
-export function get_z_options() {
-	return {
-		userID: 'anon',
-		server: PUBLIC_SERVER,
-		schema
-		// ... other options
-	} as const;
-}
+new Z<Schema>({
+	userID: 'anon',
+	// userID: user_id, possibly from loader?
+	server: PUBLIC_SERVER,
+	schema
+	// auth: data.jwt,
+});
 
-export const z = new Z<Schema>(get_z_options());
+{@render children()}
 ```
 
 +layout.server.ts
@@ -42,12 +42,28 @@ export const z = new Z<Schema>(get_z_options());
 export const ssr = false;
 ```
 
+$lib/z.svelte.ts
+
+```svelte
+import { Z } from 'zero-svelte';
+import { schema, type Schema } from '../schema'; // wherever your Zero schema lives
+import { getContext } from 'svelte';
+
+export function get_z() {
+	return getContext('z') as Z<Schema>;
+}
+```
+
 +page.svelte (basic example)
 
 ```svelte
 <script lang="ts">
 	import { Query } from 'zero-svelte';
-	import { z } from '$lib/z.svelte';
+	import { get_z } from '$lib/z.svelte';
+	const z = get_z();
+	// You could also do
+	// const z = getContext('z') as Z<Schema>
+	// Instead of creating a typed context wrapper
 
 	// Basic: always enabled; materializes immediately
 	const todos = new Query(z.current.query.todo);
@@ -99,7 +115,8 @@ export const ssr = false;
 ```svelte
 <script lang="ts">
 	import { Query } from 'zero-svelte';
-	import { z } from '$lib/z.svelte';
+	import { get_z } from '$lib/z.svelte';
+	const z = get_z();
 
 	// Gate materialization using the `enabled` flag.
 	// When false, the query won't materialize or register listeners,
@@ -157,8 +174,9 @@ Use a single `Query` instance and update it in response to user input. This avoi
 ```svelte
 <script lang="ts">
 	import { Query } from 'zero-svelte';
-	import { z } from '$lib/z.svelte';
+	import { get_z } from '$lib/z.svelte';
 	import { queries } from '$lib/schema.js'; // adjust path to your schema/queries
+	const z = get_z();
 
 	let filtered_type: string | undefined = $state();
 

@@ -13,13 +13,13 @@
 	});
 
 	// Stable Query instance; update when filter changes via event
-	const todos = new Query(z.current.query.todo.related('type'));
+	const todos = new Query(z.query.todo.related('type'));
 
 	function applyFilter(value: string) {
 		const ft = value || undefined;
 		const q = ft
-			? z.current.query.todo.where('type_id', '=', ft).related('type')
-			: z.current.query.todo.related('type');
+			? z.query.todo.where('type_id', '=', ft).related('type')
+			: z.query.todo.related('type');
 		todos.updateQuery(q);
 	}
 
@@ -35,7 +35,7 @@
 		const todo_type = formData.get('todo_type') as string;
 		const id = randID();
 		if (todo_name) {
-			z.current.mutate.todo.insert({ id, title: todo_name, completed: false, type_id: todo_type });
+			z.mutate.todo.insert({ id, title: todo_name, completed: false, type_id: todo_type });
 			(event.target as HTMLFormElement).reset();
 		}
 	}
@@ -44,7 +44,7 @@
 		const checkbox = event.target as HTMLInputElement;
 		const id = checkbox.value;
 		const completed = checkbox.checked;
-		z.current.mutate.todo.update({ id, completed });
+		z.mutate.todo.update({ id, completed });
 	}
 
 	function add_type(event: Event) {
@@ -53,7 +53,7 @@
 		const todo_type = formData.get('type') as string;
 		const id = randID();
 		if (todo_type) {
-			z.current.mutate.type.insert({ id, name: todo_type });
+			z.mutate.type.insert({ id, name: todo_type });
 			(event.target as HTMLFormElement).reset();
 		}
 	}

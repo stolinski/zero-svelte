@@ -30,7 +30,7 @@ new Z<Schema>({
 	// userID: user_id, possibly from loader?
 	server: PUBLIC_SERVER,
 	schema
-	// auth: data.jwt,
+	// auth: data.jwt, if you need it
 });
 
 {@render children()}
@@ -66,7 +66,7 @@ export function get_z() {
 	// Instead of creating a typed context wrapper
 
 	// Basic: always enabled; materializes immediately
-	const todos = new Query(z.current.query.todo);
+	const todos = new Query(z.query.todo);
 
 	const randID = () => Math.random().toString(36).slice(2);
 
@@ -76,7 +76,7 @@ export function get_z() {
 		const newTodo = formData.get('newTodo') as string;
 		const id = randID();
 		if (newTodo) {
-			z.current.mutate.todo.insert({ id, title: newTodo, completed: false });
+			z.mutate.todo.insert({ id, title: newTodo, completed: false });
 			(event.target as HTMLFormElement).reset();
 		}
 	}
@@ -85,7 +85,7 @@ export function get_z() {
 		const checkbox = event.target as HTMLInputElement;
 		const id = checkbox.value;
 		const completed = checkbox.checked;
-		z.current.mutate.todo.update({ id, completed });
+		z.mutate.todo.update({ id, completed });
 	}
 </script>
 
@@ -122,7 +122,7 @@ export function get_z() {
 	// When false, the query won't materialize or register listeners,
 	// and `current` will be the default snapshot until re-enabled.
 	let todosEnabled = $state(true);
-	const todos = $derived.by(() => new Query(z.current.query.todo, todosEnabled));
+	const todos = $derived.by(() => new Query(z.query.todo, todosEnabled));
 
 	const randID = () => Math.random().toString(36).slice(2);
 	function onsubmit(event: Event) {
@@ -131,7 +131,7 @@ export function get_z() {
 		const newTodo = formData.get('newTodo') as string;
 		const id = randID();
 		if (newTodo) {
-			z.current.mutate.todo.insert({ id, title: newTodo, completed: false });
+			z.mutate.todo.insert({ id, title: newTodo, completed: false });
 			(event.target as HTMLFormElement).reset();
 		}
 	}
@@ -139,7 +139,7 @@ export function get_z() {
 		const checkbox = event.target as HTMLInputElement;
 		const id = checkbox.value;
 		const completed = checkbox.checked;
-		z.current.mutate.todo.update({ id, completed });
+		z.mutate.todo.update({ id, completed });
 	}
 </script>
 
@@ -181,15 +181,15 @@ Use a single `Query` instance and update it in response to user input. This avoi
 	let filtered_type: string | undefined = $state();
 
 	// Create once
-	const todos = new Query(z.current.query.todo.related('type'));
+	const todos = new Query(z.query.todo.related('type'));
 	const types = new Query(queries.allTypes());
 
 	function applyFilter(value: string) {
 		const ft = value || undefined;
 		filtered_type = ft;
 		const q = ft
-			? z.current.query.todo.where('type_id', '=', ft).related('type')
-			: z.current.query.todo.related('type');
+			? z.query.todo.where('type_id', '=', ft).related('type')
+			: z.query.todo.related('type');
 		todos.updateQuery(q);
 	}
 </script>
@@ -217,7 +217,7 @@ Use a single `Query` instance and update it in response to user input. This avoi
 Mutations & queries are done with just standard Zero.
 
 ```javascript
-z.current.mutate.todo.update({ id, completed });
+z.mutate.todo.update({ id, completed });
 ```
 
 See demo for real working code.

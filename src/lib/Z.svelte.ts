@@ -1,10 +1,16 @@
-import { Zero, type Schema, type ZeroOptions, type CustomMutatorDefs } from '@rocicorp/zero';
+import {
+	Zero,
+	type Schema,
+	type ZeroOptions,
+	type CustomMutatorDefs,
+	type Query as QueryDef
+} from '@rocicorp/zero';
 import { setContext } from 'svelte';
 
 // This is the state of the Zero instance
 // You can reset it on login or logout
 export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined = undefined> {
-	current: Zero<TSchema, MD> = $state(null!);
+	#zero = $state<Zero<TSchema, MD>>(null!);
 
 	constructor(z_options: ZeroOptions<TSchema, MD>) {
 		this.build(z_options);
@@ -21,12 +27,42 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 		}
 	}
 
+	// Reactive getters that proxy to internal Zero instance
+	get query() {
+		return this.#zero.query;
+	}
+
+	get mutate() {
+		return this.#zero.mutate;
+	}
+
+	get clientID() {
+		return this.#zero.clientID;
+	}
+
+	get userID() {
+		return this.#zero.userID;
+	}
+
+	materialize<TTable extends keyof TSchema['tables'] & string, TReturn>(
+		query: QueryDef<TSchema, TTable, TReturn>
+	) {
+		return this.#zero.materialize(query);
+	}
+
+	/**
+	 * @deprecated Use direct accessors or methods instead. ie z.query, z.mutate, z.build
+	 */
+	get current() {
+		return this.#zero;
+	}
+
 	build(z_options: ZeroOptions<TSchema, MD>) {
 		// Create new Zero instance
-		this.current = new Zero(z_options);
+		this.#zero = new Zero(z_options);
 	}
 
 	close() {
-		this.current.close();
+		this.#zero.close();
 	}
 }

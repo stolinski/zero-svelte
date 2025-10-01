@@ -50,7 +50,9 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 		return this.#zero.materialize(query);
 	}
 
-	// Backward compatibility - keep .current working
+	/**
+	 * @deprecated Use direct accessors or methods instead. ie z.query, z.mutate, z.build
+	 */
 	get current() {
 		return this.#zero;
 	}

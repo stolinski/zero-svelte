@@ -1,5 +1,11 @@
 # zero-svelte
 
+## 0.8.0
+
+### Minor Changes
+
+- [#46](https://github.com/stolinski/zero-svelte/pull/46) [`be0e65f`](https://github.com/stolinski/zero-svelte/commit/be0e65f5e303ffd79586430dac8565ec194c639b) Thanks [@stolinski](https://github.com/stolinski)! - Adds online property for when the sync is online
+
 ## 0.7.0
 
 ### Minor Changes

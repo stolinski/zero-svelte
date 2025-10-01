@@ -59,6 +59,12 @@
 	}
 </script>
 
+{#if z.online}
+	<div>Connected</div>
+{:else}
+	<div>Offline</div>
+{/if}
+
 <div>
 	<form onsubmit={add_type}>
 		<input type="text" id="type" name="type" />

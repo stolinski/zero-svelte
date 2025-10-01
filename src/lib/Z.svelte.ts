@@ -11,6 +11,8 @@ import { setContext } from 'svelte';
 // You can reset it on login or logout
 export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined = undefined> {
 	#zero = $state<Zero<TSchema, MD>>(null!);
+	#online = $state(true);
+	#onlineUnsubscribe?: () => void;
 
 	constructor(z_options: ZeroOptions<TSchema, MD>) {
 		this.build(z_options);
@@ -44,6 +46,10 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 		return this.#zero.userID;
 	}
 
+	get online() {
+		return this.#online;
+	}
+
 	materialize<TTable extends keyof TSchema['tables'] & string, TReturn>(
 		query: QueryDef<TSchema, TTable, TReturn>
 	) {
@@ -58,11 +64,19 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 	}
 
 	build(z_options: ZeroOptions<TSchema, MD>) {
+		// Clean up previous subscription if it exists
+		this.#onlineUnsubscribe?.();
 		// Create new Zero instance
 		this.#zero = new Zero(z_options);
+
+		// Subscribe to online status changes
+		this.#onlineUnsubscribe = this.#zero.onOnline((online) => {
+			this.#online = online;
+		});
 	}
 
 	close() {
+		this.#onlineUnsubscribe?.();
 		this.#zero.close();
 	}
 }

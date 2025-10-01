@@ -80,7 +80,7 @@ class ViewWrapper<
 	#materializeIfNeeded() {
 		if (!this.enabled) return;
 		if (!this.#view) {
-			this.#view = this.z.current.materialize(this.query);
+			this.#view = this.z.materialize(this.query);
 			this.onMaterialized(this);
 		}
 	}
@@ -112,7 +112,7 @@ class ViewStore {
 			);
 		}
 
-		const hash = query.hash() + z?.current?.clientID;
+		const hash = query.hash() + z?.clientID;
 		let existing = this.#views.get(hash) as ViewWrapper<TSchema, TTable, TReturn> | undefined;
 
 		if (!existing) {

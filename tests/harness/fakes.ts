@@ -56,16 +56,43 @@ export function makeZStub(opts?: { userID?: string }) {
 	const created: Array<{ query: unknown; tv: ReturnType<typeof makeTypedViewStub> }> = [];
 	let last: ReturnType<typeof makeTypedViewStub> | undefined;
 
+	const zeroInstance = {
+		userID: opts?.userID,
+		clientID: opts?.userID, // For stubs, clientID same as userID
+		query: {} as any, // Mock query builder
+		mutate: {} as any, // Mock mutate
+		materialize(query: unknown) {
+			const tv = makeTypedViewStub();
+			created.push({ query, tv });
+			last = tv;
+			return tv.view;
+		},
+		close() {}
+	};
+
 	const z = {
-		current: {
-			userID: opts?.userID,
-			materialize(query: unknown) {
-				const tv = makeTypedViewStub();
-				created.push({ query, tv });
-				last = tv;
-				return tv.view;
-			},
-			close() {}
+		// Getter proxies (mimicking the real Z class)
+		get query() {
+			return zeroInstance.query;
+		},
+		get mutate() {
+			return zeroInstance.mutate;
+		},
+		get clientID() {
+			return zeroInstance.clientID;
+		},
+		get userID() {
+			return zeroInstance.userID;
+		},
+		materialize(query: unknown) {
+			return zeroInstance.materialize(query);
+		},
+		close() {
+			return zeroInstance.close();
+		},
+		// Backward compatibility
+		get current() {
+			return zeroInstance;
 		}
 	};
 

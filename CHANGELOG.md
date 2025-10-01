@@ -1,5 +1,31 @@
 # zero-svelte
 
+## 0.7.0
+
+### Minor Changes
+
+- [#45](https://github.com/stolinski/zero-svelte/pull/45) [`0727c46`](https://github.com/stolinski/zero-svelte/commit/0727c46e7ce3363e29ee190cc5fcff7b04ad6bf3) Thanks [@stolinski](https://github.com/stolinski)! - Add getter proxies to Z class for cleaner API
+
+  Users can now access Zero instance methods directly via `z.query`, `z.mutate`, `z.clientID`, and `z.userID` instead of `z.current.query`, `z.current.mutate`, etc.
+
+  The `.current` property remains available for backward compatibility.
+
+  **Before:**
+
+  ```typescript
+  const todos = new Query(z.current.query.todo);
+  z.current.mutate.todo.insert({ id, title, completed: false });
+  ```
+
+  **After:**
+
+  ```typescript
+  const todos = new Query(z.query.todo);
+  z.mutate.todo.insert({ id, title, completed: false });
+  ```
+
+  This improves the developer experience while maintaining full reactivity when swapping Zero instances via `z.build()`.
+
 ## 0.6.2
 
 ### Patch Changes

@@ -59,8 +59,8 @@ export function makeZStub(opts?: { userID?: string }) {
 	const zeroInstance = {
 		userID: opts?.userID,
 		clientID: opts?.userID, // For stubs, clientID same as userID
-		query: {} as any, // Mock query builder
-		mutate: {} as any, // Mock mutate
+		query: {} as unknown, // Mock query builder
+		mutate: {} as unknown, // Mock mutate
 		materialize(query: unknown) {
 			const tv = makeTypedViewStub();
 			created.push({ query, tv });

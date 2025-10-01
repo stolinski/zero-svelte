@@ -120,7 +120,7 @@ export function get_z() {
 
 	// Gate materialization using the `enabled` flag.
 	// When false, the query won't materialize or register listeners,
-	// and `current` will be the default snapshot until re-enabled.
+	// and `z` will be the default snapshot until re-enabled.
 	let todosEnabled = $state(true);
 	const todos = $derived.by(() => new Query(z.query.todo, todosEnabled));
 
@@ -218,6 +218,16 @@ Mutations & queries are done with just standard Zero.
 
 ```javascript
 z.mutate.todo.update({ id, completed });
+```
+
+Online Status
+
+```svelte
+{#if z.online}
+	<div>Connected</div>
+{:else}
+	<div>Offline</div>
+{/if}
 ```
 
 See demo for real working code.

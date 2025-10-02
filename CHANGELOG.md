@@ -1,5 +1,13 @@
 # zero-svelte
 
+## 0.8.1
+
+### Patch Changes
+
+- [`aa6a761`](https://github.com/stolinski/zero-svelte/commit/aa6a761cc1e698af37099a709483b52b2c43a1a1) Thanks [@stolinski](https://github.com/stolinski)! - Fix TypeScript type declaration generation for Z class exports
+
+  Added explicit return type annotations to all getters and methods in the Z class to resolve TypeScript's inability to generate portable type declarations. This fixes the "zero-svelte has no exported member 'Z'" error when importing the package.
+
 ## 0.8.0
 
 ### Minor Changes

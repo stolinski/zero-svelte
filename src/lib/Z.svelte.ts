@@ -3,7 +3,9 @@ import {
 	type Schema,
 	type ZeroOptions,
 	type CustomMutatorDefs,
-	type Query as QueryDef
+	type Query as QueryDef,
+	type TypedView,
+	type HumanReadable
 } from '@rocicorp/zero';
 import { setContext } from 'svelte';
 
@@ -30,36 +32,36 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 	}
 
 	// Reactive getters that proxy to internal Zero instance
-	get query() {
+	get query(): Zero<TSchema, MD>['query'] {
 		return this.#zero.query;
 	}
 
-	get mutate() {
+	get mutate(): Zero<TSchema, MD>['mutate'] {
 		return this.#zero.mutate;
 	}
 
-	get clientID() {
+	get clientID(): string {
 		return this.#zero.clientID;
 	}
 
-	get userID() {
+	get userID(): string {
 		return this.#zero.userID;
 	}
 
-	get online() {
+	get online(): boolean {
 		return this.#online;
 	}
 
 	materialize<TTable extends keyof TSchema['tables'] & string, TReturn>(
 		query: QueryDef<TSchema, TTable, TReturn>
-	) {
+	): TypedView<HumanReadable<TReturn>> {
 		return this.#zero.materialize(query);
 	}
 
 	/**
 	 * @deprecated Use direct accessors or methods instead. ie z.query, z.mutate, z.build
 	 */
-	get current() {
+	get current(): Zero<TSchema, MD> {
 		return this.#zero;
 	}
 

@@ -56,13 +56,15 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 
 	preload<TTable extends keyof TSchema['tables'] & string>(
 		query: QueryDef<TSchema, TTable, any>,
-		options?: {
-		/**
-		 * Time To Live. This is the amount of time to keep the rows associated with
-		 * this query after {@linkcode cleanup} has been called.
-		 */
-			ttl?: TTL | undefined;
-		} | undefined
+		options?:
+			| {
+					/**
+					 * Time To Live. This is the amount of time to keep the rows associated with
+					 * this query after {@linkcode cleanup} has been called.
+					 */
+					ttl?: TTL | undefined;
+			  }
+			| undefined
 	): { cleanup: () => void; complete: Promise<void> } {
 		return this.#zero.preload(query, options);
 	}

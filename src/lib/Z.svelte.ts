@@ -1,11 +1,12 @@
 import {
 	Zero,
-	type Schema,
-	type ZeroOptions,
 	type CustomMutatorDefs,
+	type HumanReadable,
 	type Query as QueryDef,
+	type Schema,
+	type TTL,
 	type TypedView,
-	type HumanReadable
+	type ZeroOptions
 } from '@rocicorp/zero';
 import { setContext } from 'svelte';
 
@@ -56,6 +57,13 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 		query: QueryDef<TSchema, TTable, TReturn>
 	): TypedView<HumanReadable<TReturn>> {
 		return this.#zero.materialize(query);
+	}
+
+	preload<TTable extends keyof TSchema['tables'] & string, TReturn>(
+		query: QueryDef<TSchema, TTable, TReturn>,
+		options?: { ttl?: TTL }
+	) {
+		return this.#zero.preload(query, options);
 	}
 
 	/**

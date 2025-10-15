@@ -5,3 +5,4 @@ yarn.lock
 
 # Changesets
 .changeset/*.md
+CHANGELOG.md

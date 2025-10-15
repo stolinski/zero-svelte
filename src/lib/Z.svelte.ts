@@ -1,11 +1,13 @@
 import {
+	RunOptions,
+	TTL,
 	Zero,
-	type Schema,
-	type ZeroOptions,
 	type CustomMutatorDefs,
+	type HumanReadable,
 	type Query as QueryDef,
+	type Schema,
 	type TypedView,
-	type HumanReadable
+	type ZeroOptions
 } from '@rocicorp/zero';
 import { setContext } from 'svelte';
 
@@ -50,6 +52,25 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 
 	get online(): boolean {
 		return this.#online;
+	}
+
+	preload<TTable extends keyof TSchema['tables'] & string>(
+		query: QueryDef<TSchema, TTable, any>,
+		options?:
+			| {
+					/**
+					 * Time To Live. This is the amount of time to keep the rows associated with
+					 * this query after {@linkcode cleanup} has been called.
+					 */
+					ttl?: TTL | undefined;
+			  }
+			| undefined
+	): { cleanup: () => void; complete: Promise<void> } {
+		return this.#zero.preload(query, options);
+	}
+
+	run<Q>(query: Q, runOptions?: RunOptions | undefined) {
+		return this.#zero.run(query, runOptions);
 	}
 
 	materialize<TTable extends keyof TSchema['tables'] & string, TReturn>(

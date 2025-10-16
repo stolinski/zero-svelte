@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
-import QueryHost from '../../tests/harness/QueryHost.svelte';
 import type { Query as QueryDef, Schema } from '@rocicorp/zero';
+import { render, screen } from '@testing-library/svelte';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { makeZStub } from '../../tests/harness/fakes.js';
+import QueryHost from '../../tests/harness/QueryHost.svelte';
 
 function makeQuery<T>(opts: { singular?: boolean; hash?: string } = {}) {
 	const singular = opts.singular ?? true;

@@ -37,6 +37,9 @@ jobs:
         if: runner.os == 'Linux'
         run: npm install --no-save --no-package-lock @rollup/rollup-linux-x64-gnu
 
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Detect publishable changes (gates changeset)
         uses: tj-actions/changed-files@v45
         id: changed
@@ -76,19 +79,16 @@ jobs:
       - name: Fail if missing changeset
         if: ${{ steps.need_changeset.outputs.missing == 'true' }}
         run: |
-          echo "Missing changeset: add one with 'npm run changeset' or label this PR 'skip-release'."
+          echo "❌ Missing changeset"
+          echo ""
+          echo "This PR changes publishable code but does not include a Changeset."
+          echo ""
+          echo "To fix:"
+          echo "  1. Run 'npm run changeset' locally and choose patch/minor/major"
+          echo "  2. Commit the generated .changeset/*.md file to this PR"
+          echo ""
+          echo "If this PR does not require a release (docs/CI/dev-only), add the 'skip-release' label."
           exit 1
-
-      - name: Format (Prettier write)
-        run: npm run format
-
-      - name: Verify no formatting changes
-        run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            echo "Prettier made changes. Run 'npm run format' locally and commit them.";
-            git --no-pager diff --name-only;
-            exit 1;
-          fi
 
       - name: Create .env for CI (SvelteKit static env)
         run: |

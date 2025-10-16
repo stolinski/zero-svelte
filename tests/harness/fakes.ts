@@ -1,4 +1,5 @@
 // Lightweight test doubles that match the runtime surface used by Query
+import { ViewStore } from '$lib/Z.svelte.js';
 
 export type ResultType = 'unknown' | 'complete';
 export type Listener = (data: unknown, resultType: ResultType) => void;
@@ -70,6 +71,8 @@ export function makeZStub(opts?: { userID?: string }) {
 		close() {}
 	};
 
+	const viewStoreInstance = new ViewStore();
+
 	const z = {
 		// Getter proxies (mimicking the real Z class)
 		get query() {
@@ -83,6 +86,9 @@ export function makeZStub(opts?: { userID?: string }) {
 		},
 		get userID() {
 			return zeroInstance.userID;
+		},
+		get viewStore() {
+			return viewStoreInstance;
 		},
 		materialize(query: unknown) {
 			return zeroInstance.materialize(query);

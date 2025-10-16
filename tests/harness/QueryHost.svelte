@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { setContext } from 'svelte';
 	import { Query } from '$lib/query.svelte.js';
 	import type { Query as QueryDef, Schema, TypedView } from '@rocicorp/zero';
 
@@ -30,8 +29,7 @@
 		}) => void;
 	}>();
 
-	setContext('z', z);
-	const q = new Query<Schema, string & keyof Schema['tables'], unknown>(query, enabled);
+	const q = new Query<Schema, string & keyof Schema['tables'], unknown>(query, z as any, enabled);
 
 	register?.({
 		updateQuery: (newQ: QueryDef<Schema, string & keyof Schema['tables'], unknown>, en = true) =>

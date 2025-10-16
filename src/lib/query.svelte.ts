@@ -1,10 +1,7 @@
-import type { Entry, HumanReadable, Query as QueryDef, Schema, TypedView } from '@rocicorp/zero';
-import { getContext } from 'svelte';
-import { createSubscriber } from 'svelte/reactivity';
-import type { Z } from './Z.svelte.js';
-
-export type ResultType = 'unknown' | 'complete';
-export type QueryResultDetails = { type: ResultType };
+import type { CustomMutatorDefs, HumanReadable, Query as QueryDef, Schema } from '@rocicorp/zero';
+import type { ViewWrapper, Z } from './Z.svelte.js';
+import type { QueryResultDetails, ResultType } from './types.js';
+export type { QueryResultDetails, ResultType };
 export type QueryResult<TReturn> = readonly [HumanReadable<TReturn>, QueryResultDetails];
 
 const emptyArray: unknown[] = [];
@@ -17,160 +14,57 @@ function getDefaultSnapshot<TReturn>(singular: boolean): QueryResult<TReturn> {
 	return (singular ? defaultSnapshots.singular : defaultSnapshots.plural) as QueryResult<TReturn>;
 }
 
-class ViewWrapper<
-	TSchema extends Schema,
-	TTable extends keyof TSchema['tables'] & string,
-	TReturn
-> {
-	#view: TypedView<HumanReadable<TReturn>> | undefined;
-	#data = $state<Entry>({ '': undefined });
-	#status = $state<QueryResultDetails>({ type: 'unknown' });
-	#subscribe: () => void;
-	readonly #refCountMap = new WeakMap<Entry, number>();
-
-	constructor(
-		private z: Z<Schema>,
-		private query: QueryDef<TSchema, TTable, TReturn>,
-		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn>) => void,
-		private onDematerialized: () => void,
-		private enabled: boolean
-	) {
-		// Initialize the data based on format
-		this.#data = { '': this.query.format.singular ? undefined : [] };
-
-		// Create a subscriber that manages view lifecycle
-		this.#subscribe = createSubscriber((notify) => {
-			this.#materializeIfNeeded();
-
-			let removeListener: (() => void) | undefined;
-			if (this.#view) {
-				// Listen for updates from the underlying TypedView and notify Svelte
-				removeListener = this.#view.addListener((snap, resultType) => {
-					this.#onData(snap as unknown as HumanReadable<TReturn> | undefined, resultType);
-					notify();
-				});
-			}
-
-			// Return cleanup function that will only be called
-			// when all effects are destroyed
-			return () => {
-				removeListener?.();
-				this.#view?.destroy();
-				this.#view = undefined;
-				this.onDematerialized();
-			};
-		});
-	}
-
-	#onData = (
-		snap: HumanReadable<TReturn> | undefined,
-		resultType: ResultType
-		// update: () => void // not used??
-	) => {
-		// Clear old references
-		this.#refCountMap.delete(this.#data);
-
-		// Update data and track new references; snapshots from Zero are immutable
-		this.#data = { '': snap as HumanReadable<TReturn> };
-		this.#refCountMap.set(this.#data, 1);
-
-		this.#status = { type: resultType };
-	};
-
-	#materializeIfNeeded() {
-		if (!this.enabled) return;
-		if (!this.#view) {
-			this.#view = this.z.materialize(this.query);
-			this.onMaterialized(this);
-		}
-	}
-
-	// Used in Svelte components
-	get current(): QueryResult<TReturn> {
-		// This triggers the subscription tracking
-		this.#subscribe();
-		const data = this.#data[''];
-		return [data as HumanReadable<TReturn>, this.#status];
-	}
-}
-
-class ViewStore {
-	#views = new Map<string, unknown>();
-
-	getView<TSchema extends Schema, TTable extends keyof TSchema['tables'] & string, TReturn>(
-		z: Z<Schema>,
-		query: QueryDef<TSchema, TTable, TReturn>,
-		enabled: boolean = true
-	): ViewWrapper<TSchema, TTable, TReturn> {
-		if (!enabled) {
-			return new ViewWrapper(
-				z,
-				query,
-				() => {},
-				() => {},
-				false
-			);
-		}
-
-		const hash = query.hash() + z?.clientID;
-		let existing = this.#views.get(hash) as ViewWrapper<TSchema, TTable, TReturn> | undefined;
-
-		if (!existing) {
-			existing = new ViewWrapper(
-				z,
-				query,
-				(view) => {
-					const lastView = this.#views.get(hash);
-					if (lastView && lastView !== view) {
-						throw new Error('View already exists');
-					}
-					this.#views.set(hash, view);
-				},
-				() => this.#views.delete(hash),
-				true
-			);
-			this.#views.set(hash, existing);
-		}
-
-		return existing;
-	}
-}
-
-export const viewStore = new ViewStore();
-
 export class Query<
 	TSchema extends Schema,
 	TTable extends keyof TSchema['tables'] & string,
-	TReturn
+	TReturn,
+	MD extends CustomMutatorDefs | undefined = undefined
 > {
-	current = $state<HumanReadable<TReturn>>(null!);
-	details = $state<QueryResultDetails>(null!);
 	#query_impl: QueryDef<TSchema, TTable, TReturn>;
-	view = $state<ViewWrapper<TSchema, TTable, TReturn> | undefined>(undefined);
-	#z: Z<Schema>;
+	#z: Z<TSchema, MD>;
+	#data: HumanReadable<TReturn>;
 
-	constructor(query: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
-		this.#z = getContext('z') as Z<Schema>;
+	public details: QueryResultDetails;
+	public view: ViewWrapper<TSchema, TTable, TReturn, MD> | undefined;
+
+	constructor(
+		query: QueryDef<TSchema, TTable, TReturn>,
+		z: Z<TSchema, MD>,
+		enabled: boolean = true
+	) {
+		this.#z = z;
 		this.#query_impl = query as unknown as QueryDef<TSchema, TTable, TReturn>;
 		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
-		this.current = default_snapshot[0] as HumanReadable<TReturn>;
-		this.details = default_snapshot[1];
-		this.view = viewStore.getView(this.#z, this.#query_impl, enabled);
+		this.#data = $state<HumanReadable<TReturn>>(default_snapshot[0] as HumanReadable<TReturn>);
+		this.details = $state<QueryResultDetails>(default_snapshot[1]);
+		this.view = $state<ViewWrapper<TSchema, TTable, TReturn, MD> | undefined>(
+			this.#z.viewStore.getView(this.#z, this.#query_impl, enabled)
+		);
 
 		// Watch for changes in the query and (re)subscribe
 		$effect(() => {
 			const v = this.view;
 			if (v) {
 				const [data, details] = v.current;
-				this.current = data;
+				this.#data = data;
 				this.details = details;
 			}
 		});
 	}
 
+	get data() {
+		return this.#data;
+	}
+
+	// Deprecated accessor for backwards compatibility
+	/** @deprecated Use .data instead */
+	get current() {
+		return this.#data;
+	}
+
 	// Method to update the query
 	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
 		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
-		this.view = viewStore.getView(this.#z, this.#query_impl, enabled);
+		this.view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
 	}
 }

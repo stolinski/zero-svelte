@@ -1,5 +1,22 @@
 # zero-svelte
 
+## 1.0.0
+
+### Major Changes
+
+- [#52](https://github.com/stolinski/zero-svelte/pull/52) [`0c32930`](https://github.com/stolinski/zero-svelte/commit/0c3293063eb5d15a5d98739fd9f1e3188ede4c38) Thanks [@stolinski](https://github.com/stolinski)! - Breaking API changes:
+  - **BREAKING**: Renamed `.current` to `.data` on both Query and Z instances
+  - **BREAKING**: Moved ViewStore from global singleton into Zero instance
+  - **BREAKING**: Removed Query's dependency on Svelte context - Query instances now manage their own state internally
+
+  Migration guide:
+  - Replace `query.current` with `query.data` throughout your codebase
+  - Replace `z.current` with `z.data` when accessing the Zero instance
+
+### Patch Changes
+
+- [#48](https://github.com/stolinski/zero-svelte/pull/48) [`e80e1ab`](https://github.com/stolinski/zero-svelte/commit/e80e1abd60d7ea0236eab36937de63f8033bbfff) Thanks [@saturnonearth](https://github.com/saturnonearth)! - Add preload and run proxies for synced-queries
+
 ## 0.8.1
 
 ### Patch Changes
@@ -57,14 +74,12 @@
 ### Minor Changes
 
 - [#42](https://github.com/stolinski/zero-svelte/pull/42) [`99249a4`](https://github.com/stolinski/zero-svelte/commit/99249a4288db616e2c108015346aa38c18760e60) Thanks [@stolinski](https://github.com/stolinski)! - Add optional `enabled` flag to `Query` API to gate materialization.
-
   - `new Query(query, enabled = true)` and `query.updateQuery(query, enabled = true)` now accept an `enabled` boolean.
   - When `enabled` is `false`, the query does not materialize or register listeners; `current` exposes the default snapshot (`undefined` for singular, `[]` for plural) with details `{ type: 'unknown' }` until re-enabled.
   - When re-enabled (`true`), materialization begins and snapshots update as data arrives.
   - Default remains `true`, so existing code continues to work unchanged.
 
   Notes
-
   - View sharing behavior is unchanged: materializations are still keyed by `query.hash()` plus `userID`.
   - This is a backwards-compatible enhancement intended for conditional loading (e.g., route guards, feature toggles).
 

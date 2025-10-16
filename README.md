@@ -12,29 +12,27 @@ Watch this
 ## Usage
 
 1. Follow [ZERO DOCS](https://zero.rocicorp.dev/docs/introduction) to get started with Zero
-1. Install `npm install zero-svelte`
-1. Usage
+2. Install `npm install zero-svelte`
+3. Usage
 
-+layout.svelte
+Create your Z instance.
+
+`$lib/zero.svelte.ts`
 
 ```ts
 import { PUBLIC_SERVER } from '$env/static/public';
-import { Z } from 'zero-svelte';
-import { schema, type Schema } from '../zero-schema.js';
-// Schema is imported from wherever your Schema type lives.
-// via export type Schema = typeof schema;
-const { children } = $props();
+import { Z } from '$lib/Z.svelte.js';
+import { schema, type Schema } from '../schema.js';
 
-new Z<Schema>({
-	userID: 'anon',
-	// userID: user_id, possibly from loader?
+export const z = new Z<Schema>({
 	server: PUBLIC_SERVER,
-	schema
-	// auth: data.jwt, if you need it
+	schema,
+	userID: 'anon',
+	kvStore: 'mem'
 });
-
-{@render children()}
 ```
+
+Make sure your app has SSR turned off.
 
 +layout.server.ts
 
@@ -42,31 +40,16 @@ new Z<Schema>({
 export const ssr = false;
 ```
 
-$lib/z.svelte.ts
+Use z in your app.
 
-```svelte
-import { Z } from 'zero-svelte';
-import { schema, type Schema } from '../schema'; // wherever your Zero schema lives
-import { getContext } from 'svelte';
-
-export function get_z() {
-	return getContext('z') as Z<Schema>;
-}
-```
-
-+page.svelte (basic example)
+`+page.svelte (basic example)`
 
 ```svelte
 <script lang="ts">
-	import { Query } from 'zero-svelte';
-	import { get_z } from '$lib/z.svelte';
-	const z = get_z();
-	// You could also do
-	// const z = getContext('z') as Z<Schema>
-	// Instead of creating a typed context wrapper
+	import { z } from '$lib/zero.svelte';
 
 	// Basic: always enabled; materializes immediately
-	const todos = new Query(z.query.todo);
+	const todos = z.createQuery(z.query.todo);
 
 	const randID = () => Math.random().toString(36).slice(2);
 
@@ -96,7 +79,7 @@ export function get_z() {
 		<button type="submit">Add</button>
 	</form>
 	<ul>
-		{#each todos.current as todo}
+		{#each todos.data as todo}
 			<li>
 				<input
 					type="checkbox"
@@ -114,15 +97,12 @@ export function get_z() {
 
 ```svelte
 <script lang="ts">
-	import { Query } from 'zero-svelte';
-	import { get_z } from '$lib/z.svelte';
-	const z = get_z();
-
+	import { z } from '$lib/zero.svelte';
 	// Gate materialization using the `enabled` flag.
 	// When false, the query won't materialize or register listeners,
 	// and `z` will be the default snapshot until re-enabled.
 	let todosEnabled = $state(true);
-	const todos = $derived.by(() => new Query(z.query.todo, todosEnabled));
+	const todos = $derived.by(() => z.createQuery(z.query.todo, todosEnabled));
 
 	const randID = () => Math.random().toString(36).slice(2);
 	function onsubmit(event: Event) {
@@ -153,7 +133,7 @@ export function get_z() {
 		<button type="submit">Add</button>
 	</form>
 	<ul>
-		{#each todos.current as todo}
+		{#each todos.data as todo}
 			<li>
 				<input
 					type="checkbox"
@@ -173,16 +153,15 @@ Use a single `Query` instance and update it in response to user input. This avoi
 
 ```svelte
 <script lang="ts">
-	import { Query } from 'zero-svelte';
-	import { get_z } from '$lib/z.svelte';
+	import { z } from '$lib/zero.svelte';
 	import { queries } from '$lib/schema.js'; // adjust path to your schema/queries
-	const z = get_z();
+
 
 	let filtered_type: string | undefined = $state();
 
 	// Create once
-	const todos = new Query(z.query.todo.related('type'));
-	const types = new Query(queries.allTypes());
+	const todos = z.createQuery(z.query.todo.related('type'));
+	const types = z.createQuery(queries.allTypes());
 
 	function applyFilter(value: string) {
 		const ft = value || undefined;
@@ -200,13 +179,13 @@ Use a single `Query` instance and update it in response to user input. This avoi
 	onchange={(e) => applyFilter((e.target as HTMLSelectElement).value)}
 >
 	<option value="">All</option>
-	{#each types.current as type (type.id)}
+	{#each types.data as type (type.id)}
 		<option value={type.id}>{type.name}</option>
 	{/each}
 </select>
 
 <ul>
-	{#each todos.current as todo (todo.id)}
+	{#each todos.data as todo (todo.id)}
 		<li>{todo.title} - {todo.type?.name}</li>
 	{/each}
 </ul>

@@ -1,5 +1,27 @@
 # zero-svelte
 
+## 1.1.0
+
+### Minor Changes
+
+- ## Features
+  - **Query instances can now be created inside `$derived`** - Fixed `state_unsafe_mutation` error by refactoring Query class architecture to use lazy reactivity
+  - **Added `z.q()` alias** - Shorter syntax for `z.createQuery()`
+
+  ## Fixes
+  - Fixed infinite loops when using `$inspect` with Query data
+  - Query class now uses `$effect.root` for proper subscription lifecycle management
+  - ViewStore cache mutations are now wrapped in `untrack()` to prevent tracking in reactive contexts
+
+  ## Architecture Changes
+  - Query no longer owns state directly - it proxies to ViewWrapper's state
+  - Separated subscription activation from state reading in ViewWrapper
+  - Query getters are now pure (read-only) and safe to call in any reactive context
+
+  ## Breaking Changes
+
+  None - all existing APIs remain fully compatible.
+
 ## 1.0.0
 
 ### Major Changes

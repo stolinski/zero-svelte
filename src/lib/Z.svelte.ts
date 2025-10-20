@@ -10,6 +10,7 @@ import {
 	type TypedView,
 	type ZeroOptions
 } from '@rocicorp/zero';
+import { untrack } from 'svelte';
 import { createSubscriber, SvelteMap } from 'svelte/reactivity';
 import { Query } from './query.svelte.js';
 import type { QueryResultDetails, ResultType } from './types.js';
@@ -38,26 +39,30 @@ export class ViewStore {
 		}
 
 		const hash = query.hash();
-		let existing = this.#views.get(hash) as ViewWrapper<TSchema, TTable, TReturn, MD> | undefined;
 
-		if (!existing) {
-			existing = new ViewWrapper(
-				z,
-				query,
-				(view) => {
-					const lastView = this.#views.get(hash);
-					if (lastView && lastView !== view) {
-						throw new Error('View already exists');
-					}
-					this.#views.set(hash, view);
-				},
-				() => this.#views.delete(hash),
-				true
-			);
-			this.#views.set(hash, existing);
-		}
+		// Use untrack to prevent state mutations from being tracked during $derived
+		return untrack(() => {
+			let existing = this.#views.get(hash) as ViewWrapper<TSchema, TTable, TReturn, MD> | undefined;
 
-		return existing;
+			if (!existing) {
+				existing = new ViewWrapper(
+					z,
+					query,
+					(view) => {
+						const lastView = this.#views.get(hash);
+						if (lastView && lastView !== view) {
+							throw new Error('View already exists');
+						}
+						this.#views.set(hash, view);
+					},
+					() => this.#views.delete(hash),
+					true
+				);
+				this.#views.set(hash, existing);
+			}
+
+			return existing;
+		});
 	}
 }
 
@@ -130,12 +135,26 @@ export class ViewWrapper<
 		}
 	}
 
-	// Used in Svelte components
+	// Used in Svelte components and Query class
 	get current(): readonly [HumanReadable<TReturn>, QueryResultDetails] {
 		// This triggers the subscription tracking
 		this.#subscribe();
 		const data = this.#data[''];
 		return [data as HumanReadable<TReturn>, this.#status];
+	}
+
+	// Access data without triggering subscription (reads $state only)
+	get dataOnly(): HumanReadable<TReturn> {
+		return this.#data[''] as HumanReadable<TReturn>;
+	}
+
+	get detailsOnly(): QueryResultDetails {
+		return this.#status;
+	}
+
+	// Manually ensure subscription is active
+	ensureSubscribed(): void {
+		this.#subscribe();
 	}
 }
 

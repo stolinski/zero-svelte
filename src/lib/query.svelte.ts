@@ -22,10 +22,8 @@ export class Query<
 > {
 	#query_impl: QueryDef<TSchema, TTable, TReturn>;
 	#z: Z<TSchema, MD>;
-	#data: HumanReadable<TReturn>;
-
-	public details: QueryResultDetails;
-	public view: ViewWrapper<TSchema, TTable, TReturn, MD> | undefined;
+	#view = $state<ViewWrapper<TSchema, TTable, TReturn, MD> | undefined>();
+	#cleanup?: () => void;
 
 	constructor(
 		query: QueryDef<TSchema, TTable, TReturn>,
@@ -34,37 +32,57 @@ export class Query<
 	) {
 		this.#z = z;
 		this.#query_impl = query as unknown as QueryDef<TSchema, TTable, TReturn>;
-		const default_snapshot = getDefaultSnapshot(this.#query_impl.format.singular);
-		this.#data = $state<HumanReadable<TReturn>>(default_snapshot[0] as HumanReadable<TReturn>);
-		this.details = $state<QueryResultDetails>(default_snapshot[1]);
-		this.view = $state<ViewWrapper<TSchema, TTable, TReturn, MD> | undefined>(
-			this.#z.viewStore.getView(this.#z, this.#query_impl, enabled)
-		);
+		this.#view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
 
-		// Watch for changes in the query and (re)subscribe
-		$effect(() => {
-			const v = this.view;
-			if (v) {
-				const [data, details] = v.current;
-				this.#data = data;
-				this.details = details;
-			}
+		// Create a persistent effect that keeps the ViewWrapper subscription alive
+		// This effect reads view.current which activates the subscription
+		this.#cleanup = $effect.root(() => {
+			$effect(() => {
+				// Reading current activates and maintains the subscription
+				this.#view?.current;
+			});
 		});
 	}
 
 	get data() {
-		return this.#data;
+		const view = this.#view; // Read $state (tracks dependency on view changes)
+		if (!view) {
+			// Return default based on query format
+			return (this.#query_impl.format.singular ? undefined : []) as HumanReadable<TReturn>;
+		}
+		// Read state without re-triggering subscription (already activated in constructor)
+		return view.dataOnly;
+	}
+
+	get details() {
+		const view = this.#view; // Read $state (tracks dependency on view changes)
+		if (!view) {
+			return { type: 'unknown' } as QueryResultDetails;
+		}
+		// Read state without re-triggering subscription (already activated in constructor)
+		return view.detailsOnly;
+	}
+
+	// Keep for backwards compatibility
+	get view() {
+		return this.#view;
 	}
 
 	// Deprecated accessor for backwards compatibility
 	/** @deprecated Use .data instead */
 	get current() {
-		return this.#data;
+		return this.data;
 	}
 
 	// Method to update the query
 	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
 		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
-		this.view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
+		this.#view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
+		// Setting #view (a $state) will trigger reactivity in components reading .data/.details
+	}
+
+	// Cleanup method to destroy the persistent effect
+	destroy() {
+		this.#cleanup?.();
 	}
 }

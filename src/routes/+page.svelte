@@ -3,6 +3,8 @@
 	import { queries } from '../schema.js';
 	import { z } from './zero.svelte.js';
 
+	let show: 'ALL' | 'COMPLETED' = $state('ALL');
+
 	// BASIC QUERY
 	// Stable Query instance; update when filter changes via event
 	const todos = z.createQuery(z.query.todo.related('type'));
@@ -17,6 +19,11 @@
 
 	// BASIC QUERY + SYNCED QUERY API (soon to be deafult)
 	const types = z.createQuery(queries.allTypes());
+	$inspect(types.data);
+
+	const filtered_todos = $derived(
+		z.createQuery(z.query.todo.where('completed', '=', show === 'COMPLETED').related('type'))
+	);
 
 	const randID = () => Math.random().toString(36).slice(2);
 
@@ -50,6 +57,8 @@
 			(event.target as HTMLFormElement).reset();
 		}
 	}
+
+	$inspect(filtered_todos.data);
 </script>
 
 {#if z.online}
@@ -73,6 +82,19 @@
 		<button type="submit">Add</button>
 	</form>
 	<h1>Todos</h1>
+	<label>
+		Show Completed:
+		<input
+			type="checkbox"
+			name="filter_option"
+			value="incomplete"
+			checked={show === 'COMPLETED'}
+			onchange={() => {
+				show = 'COMPLETED' === show ? 'ALL' : 'COMPLETED';
+			}}
+		/>
+	</label>
+
 	<select
 		name="todo_type"
 		id="todo_type"

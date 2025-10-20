@@ -4,16 +4,6 @@ import type { QueryResultDetails, ResultType } from './types.js';
 export type { QueryResultDetails, ResultType };
 export type QueryResult<TReturn> = readonly [HumanReadable<TReturn>, QueryResultDetails];
 
-const emptyArray: unknown[] = [];
-const defaultSnapshots = {
-	singular: [undefined, { type: 'unknown' }] as const,
-	plural: [emptyArray, { type: 'unknown' }] as const
-};
-
-function getDefaultSnapshot<TReturn>(singular: boolean): QueryResult<TReturn> {
-	return (singular ? defaultSnapshots.singular : defaultSnapshots.plural) as QueryResult<TReturn>;
-}
-
 export class Query<
 	TSchema extends Schema,
 	TTable extends keyof TSchema['tables'] & string,
@@ -39,7 +29,7 @@ export class Query<
 		this.#cleanup = $effect.root(() => {
 			$effect(() => {
 				// Reading current activates and maintains the subscription
-				this.#view?.current;
+				void this.#view?.current;
 			});
 		});
 	}

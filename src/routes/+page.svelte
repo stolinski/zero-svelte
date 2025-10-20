@@ -19,7 +19,6 @@
 
 	// BASIC QUERY + SYNCED QUERY API (soon to be deafult)
 	const types = z.createQuery(queries.allTypes());
-	$inspect(types.data);
 
 	const filtered_todos = $derived(
 		z.createQuery(
@@ -61,8 +60,6 @@
 			(event.target as HTMLFormElement).reset();
 		}
 	}
-
-	$inspect(filtered_todos.data);
 </script>
 
 {#if z.online}

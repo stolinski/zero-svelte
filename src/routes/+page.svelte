@@ -118,4 +118,9 @@
 			</li>
 		{/each}
 	</ul>
+	{#each filtered_todos.data as todo (todo.id + 'filtered')}
+		<div>
+			{todo.title} - {todo.type?.name} [{todo.completed ? 'Done' : 'Pending'}]
+		</div>
+	{/each}
 </div>

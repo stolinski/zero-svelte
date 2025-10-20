@@ -156,7 +156,6 @@ Use a single `Query` instance and update it in response to user input. This avoi
 	import { z } from '$lib/zero.svelte';
 	import { queries } from '$lib/schema.js'; // adjust path to your schema/queries
 
-
 	let filtered_type: string | undefined = $state();
 
 	// Create once

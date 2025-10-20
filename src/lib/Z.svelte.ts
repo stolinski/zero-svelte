@@ -202,6 +202,14 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 		return new Query(query, this, enabled);
 	}
 
+	// Alias for createQuery - shorter syntax
+	q<TTable extends keyof TSchema['tables'] & string, TReturn>(
+		query: QueryDef<TSchema, TTable, TReturn>,
+		enabled: boolean = true
+	): Query<TSchema, TTable, TReturn, MD> {
+		return this.createQuery(query, enabled);
+	}
+
 	preload<TTable extends keyof TSchema['tables'] & string>(
 		query: QueryDef<TSchema, TTable, unknown>,
 		options?:

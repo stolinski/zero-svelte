@@ -7,7 +7,7 @@
 
 	// BASIC QUERY
 	// Stable Query instance; update when filter changes via event
-	const todos = z.createQuery(z.query.todo.related('type'));
+	const todos = z.q(z.query.todo.related('type')); // Using q alias!
 
 	function applyFilter(value: string) {
 		const ft = value || undefined;
@@ -22,7 +22,11 @@
 	$inspect(types.data);
 
 	const filtered_todos = $derived(
-		z.createQuery(z.query.todo.where('completed', '=', show === 'COMPLETED').related('type'))
+		z.createQuery(
+			z.query.todo
+				.where('completed', '=', show === ('COMPLETED' as 'COMPLETED' | 'ALL') ? true : false)
+				.related('type')
+		)
 	);
 
 	const randID = () => Math.random().toString(36).slice(2);
@@ -90,7 +94,7 @@
 			value="incomplete"
 			checked={show === 'COMPLETED'}
 			onchange={() => {
-				show = 'COMPLETED' === show ? 'ALL' : 'COMPLETED';
+				show = show === 'COMPLETED' ? 'ALL' : 'COMPLETED';
 			}}
 		/>
 	</label>

@@ -48,7 +48,9 @@ export class Query<
 		const view = this.#view; // Read $state (tracks dependency on view changes)
 		if (!view) {
 			// Return default based on query format
-			return (this.#query_impl.format.singular ? undefined : []) as HumanReadable<TReturn>;
+			return (this.#query_impl.format.singular
+				? undefined
+				: []) as unknown as HumanReadable<TReturn>;
 		}
 		// Read state without re-triggering subscription (already activated in constructor)
 		return view.dataOnly;

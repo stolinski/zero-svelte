@@ -8,13 +8,12 @@ import { createMutators, type CreateMutators } from './api/mutators/index.svelte
 // ZERO_MUTATE_URL="http://localhost:9370/api/mutators"
 // ZERO_PUSH_URL="http://localhost:9370/api/push-processor"
 
-const authData = {sub: "123456"}
-
+const fake_auth_data = {sub: "123456"}
 
 export const z = new Z<Schema, CreateMutators>({
 	server: PUBLIC_SERVER,
 	schema,
 	userID: 'anon',
 	kvStore: 'mem',
-	mutators: createMutators(authData)
+	mutators: createMutators(fake_auth_data )
 });

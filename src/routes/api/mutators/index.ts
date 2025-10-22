@@ -1,6 +1,5 @@
 import type { CustomMutatorDefs, Transaction } from '@rocicorp/zero';
 import type { Schema } from '../../../schema.js';
-// import type { Schema } from '$lib/schema.js';
 
 export function createMutators() {
 	return {

@@ -44,6 +44,7 @@ h1 {
 
 form {
 	display: flex;
+	align-items: center;
 	gap: var(--spacing-sm);
 	margin-bottom: var(--spacing-lg);
 	background: var(--input-background);
@@ -104,4 +105,22 @@ input[type='checkbox'] {
 
 select {
 	cursor: pointer;
+}
+
+dialog {
+	border-color: var(--border-color);
+	box-shadow: var(--shadow-md);
+	border-radius: var(--radius-md);
+	border-width: 1px;
+}
+
+.ghost{
+	background-color: transparent;
+	color: black;
+	border-radius: 100%;
+	padding: 4px
+}
+
+.ghost:hover{
+	background-color: transparent;
 }

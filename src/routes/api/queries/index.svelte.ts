@@ -2,6 +2,7 @@ import { createBuilder, syncedQuery } from '@rocicorp/zero';
 import zod from 'zod';
 import { schema } from '../../../schema.js';
 
+// You can use runes in thi file
 export const builder = createBuilder(schema);
 
 export const queries = {

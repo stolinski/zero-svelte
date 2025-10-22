@@ -58,10 +58,11 @@ export const permissions = definePermissions<AuthData, Schema>(schema, () => {
 	};
 });
 
-export const builder = createBuilder(schema);
+// syncedQueries could go here
+// export const builder = createBuilder(schema);
 
-export const queries = {
-	allTypes: syncedQuery('allTypes', zod.tuple([]), () => {
-		return builder.type;
-	})
-};
+// export const queries = {
+// 	allTypes: syncedQuery('allTypes', zod.tuple([]), () => {
+// 		return builder.type;
+// 	})
+// };

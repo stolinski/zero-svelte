@@ -179,6 +179,10 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 		return this.#zero.mutate;
 	}
 
+	get mutateBatch(): Zero<TSchema, MD>['mutateBatch'] {
+		return this.#zero.mutateBatch;
+	}
+
 	get clientID(): string {
 		return this.#zero.clientID;
 	}

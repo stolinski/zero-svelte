@@ -1,16 +1,33 @@
 <script lang="ts">
 	import './styles.css';
-	import { queries } from '../schema.js';
+	import { queries, zql } from '../schema.js';
 	import { z, mutators } from './zero.svelte.js';
 
 	let showCompleted = $state(false);
 	let typeFilter = $state('');
+	let searchText = $state('');
 
-	// Basic query - all todos
+	// Basic query - syncs all todos from server
 	const todos = z.createQuery(queries.todo.all());
 
 	// Query using defineQuery
 	const types = z.createQuery(queries.type.all());
+
+	// Local-only filtered query using raw ZQL
+	// This filters data already synced by todos query - no server round-trip per keystroke
+	// Note: For small datasets, you can also use .filter() on todos.data instead:
+	// const filtered = $derived(todos.data.filter(t => t.title.includes(searchText)));
+	// ZQL is better for large datasets (indexing) and when you need .related()
+	const searchFilteredTodos = $derived.by(() => {
+		let q = zql.todo.related('type');
+		if (searchText) {
+			q = q.where('title', 'ILIKE', `%${searchText}%`);
+		}
+		if (typeFilter) {
+			q = q.where('type_id', '=', typeFilter);
+		}
+		return z.createQuery(q);
+	});
 
 	// Filtered query using $derived - recreates when showCompleted changes
 	const filtered_todos = $derived(
@@ -74,23 +91,18 @@
 		<button type="submit">Add</button>
 	</form>
 	<h1>Todos</h1>
-	<label>
-		Show Completed Only:
-		<input type="checkbox" name="filter_option" bind:checked={showCompleted} />
-	</label>
 
-	<select
-		name="todo_type"
-		id="todo_type"
-		onchange={(e) => (typeFilter = (e.target as HTMLSelectElement).value)}
-	>
-		<option value="">All</option>
-		{#each types.data as type (type.id + 'option-list')}
+	<h2>Local-only filtering (text search + type filter)</h2>
+	<p>Uses raw ZQL to filter locally - no server round-trip per keystroke</p>
+	<input type="text" placeholder="Search todos..." bind:value={searchText} />
+	<select name="type_filter" onchange={(e) => (typeFilter = (e.target as HTMLSelectElement).value)}>
+		<option value="">All Types</option>
+		{#each types.data as type (type.id + 'filter-option')}
 			<option value={type.id}>{type.name}</option>
 		{/each}
 	</select>
 	<ul>
-		{#each todos.data as todo (todo.id)}
+		{#each searchFilteredTodos.data as todo (todo.id + 'search')}
 			<li>
 				<input
 					type="checkbox"
@@ -102,7 +114,14 @@
 		{/each}
 	</ul>
 
-	<p>Just a quick demo to show the filtered_todos working.</p>
+	<hr />
+
+	<h2>Server-synced query (defineQuery)</h2>
+	<label>
+		Show Completed Only:
+		<input type="checkbox" name="filter_option" bind:checked={showCompleted} />
+	</label>
+	<p>Uses defineQuery - registers with server</p>
 	{#each filtered_todos.data as todo (todo.id + 'filtered')}
 		<div>
 			{todo.title} - {todo.type?.name}

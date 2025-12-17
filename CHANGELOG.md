@@ -1,5 +1,11 @@
 # zero-svelte
 
+## 1.1.2
+
+### Patch Changes
+
+- [#58](https://github.com/stolinski/zero-svelte/pull/58) [`6110124`](https://github.com/stolinski/zero-svelte/commit/61101242de00e53dc14c53ff499046fe5526daba) Thanks [@Schmell](https://github.com/Schmell)! - add mutateBatch to Z
+
 ## 1.1.0
 
 ### Minor Changes

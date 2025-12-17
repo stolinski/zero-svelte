@@ -41,7 +41,8 @@ const todoRelationship = relationships(todos, ({ one }) => ({
 
 export const schema = createSchema({
 	tables: [types, todos],
-	relationships: [todoRelationship]
+	relationships: [todoRelationship],
+	enableLegacyQueries: false
 });
 
 export type Schema = typeof schema;

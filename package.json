@@ -36,27 +36,27 @@
 		"svelte": "^5.15.0"
 	},
 	"devDependencies": {
-		"@changesets/changelog-github": "^0.5.0",
-		"@changesets/cli": "^2.27.1",
+		"@changesets/changelog-github": "^0.5.2",
+		"@changesets/cli": "^2.29.8",
 		"@sveltejs/adapter-auto": "^7.0.0",
-		"@sveltejs/kit": "^2.42.2",
-		"@sveltejs/package": "^2.5.2",
+		"@sveltejs/kit": "^2.49.2",
+		"@sveltejs/package": "^2.5.7",
 		"@sveltejs/vite-plugin-svelte": "^6.2.0",
 		"@types/eslint": "^9.6.0",
-		"eslint": "^9.36.0",
+		"eslint": "^9.39.2",
 		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-svelte": "^3.12.3",
-		"globals": "^16.4.0",
-		"prettier": "^3.6.2",
+		"eslint-plugin-svelte": "^3.13.1",
+		"globals": "^16.5.0",
+		"prettier": "^3.7.4",
 		"prettier-plugin-organize-imports": "^4.3.0",
-		"prettier-plugin-svelte": "^3.4.0",
-		"publint": "^0.3.13",
-		"svelte": "^5.39.2",
-		"svelte-check": "^4.3.1",
+		"prettier-plugin-svelte": "^3.4.1",
+		"publint": "^0.3.16",
+		"svelte": "^5.46.0",
+		"svelte-check": "^4.3.4",
 		"typescript": "^5.9.2",
-		"typescript-eslint": "^8.44.0",
-		"vite": "^7.1.6",
-		"zod": "^4.1.5"
+		"typescript-eslint": "^8.50.0",
+		"vite": "^7.3.0",
+		"zod": "^4.2.1"
 	},
 	"svelte": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -66,7 +66,7 @@
 		"url": "https://github.com/stolinski/zero-svelte"
 	},
 	"dependencies": {
-		"@rocicorp/zero": "^0.24.2025101500"
+		"@rocicorp/zero": "^0.25.3"
 	},
 	"publishConfig": {
 		"access": "public"

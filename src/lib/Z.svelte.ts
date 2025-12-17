@@ -1,6 +1,7 @@
 import {
 	Zero,
 	type CustomMutatorDefs,
+	type DefaultSchema,
 	type Entry,
 	type HumanReadable,
 	type Query as QueryDef,
@@ -10,6 +11,7 @@ import {
 	type TypedView,
 	type ZeroOptions
 } from '@rocicorp/zero';
+import { asQueryInternals } from '@rocicorp/zero/bindings';
 import { untrack } from 'svelte';
 import { createSubscriber, SvelteMap } from 'svelte/reactivity';
 import { Query } from './query.svelte.js';
@@ -19,15 +21,15 @@ export class ViewStore {
 	#views = new SvelteMap<string, unknown>();
 
 	getView<
-		TSchema extends Schema,
 		TTable extends keyof TSchema['tables'] & string,
+		TSchema extends Schema,
 		TReturn,
 		MD extends CustomMutatorDefs | undefined = undefined
 	>(
 		z: Z<TSchema, MD>,
-		query: QueryDef<TSchema, TTable, TReturn>,
+		query: QueryDef<TTable, TSchema, TReturn>,
 		enabled: boolean = true
-	): ViewWrapper<TSchema, TTable, TReturn, MD> {
+	): ViewWrapper<TTable, TSchema, TReturn, MD> {
 		if (!enabled) {
 			return new ViewWrapper(
 				z,
@@ -38,11 +40,11 @@ export class ViewStore {
 			);
 		}
 
-		const hash = query.hash();
+		const hash = asQueryInternals(query).hash();
 
 		// Use untrack to prevent state mutations from being tracked during $derived
 		return untrack(() => {
-			let existing = this.#views.get(hash) as ViewWrapper<TSchema, TTable, TReturn, MD> | undefined;
+			let existing = this.#views.get(hash) as ViewWrapper<TTable, TSchema, TReturn, MD> | undefined;
 
 			if (!existing) {
 				existing = new ViewWrapper(
@@ -67,8 +69,8 @@ export class ViewStore {
 }
 
 export class ViewWrapper<
-	TSchema extends Schema,
 	TTable extends keyof TSchema['tables'] & string,
+	TSchema extends Schema,
 	TReturn,
 	MD extends CustomMutatorDefs | undefined = undefined
 > {
@@ -80,13 +82,14 @@ export class ViewWrapper<
 
 	constructor(
 		private z: Z<TSchema, MD>,
-		private query: QueryDef<TSchema, TTable, TReturn>,
-		private onMaterialized: (view: ViewWrapper<TSchema, TTable, TReturn, MD>) => void,
+		private query: QueryDef<TTable, TSchema, TReturn>,
+		private onMaterialized: (view: ViewWrapper<TTable, TSchema, TReturn, MD>) => void,
 		private onDematerialized: () => void,
 		private enabled: boolean
 	) {
 		// Initialize the data based on format
-		this.#data = { '': this.query.format.singular ? undefined : [] };
+		const internals = asQueryInternals(this.query);
+		this.#data = { '': internals.format.singular ? undefined : [] };
 
 		// Create a subscriber that manages view life-cycle
 		this.#subscribe = createSubscriber((notify) => {
@@ -160,7 +163,10 @@ export class ViewWrapper<
 
 // This is the state of the Zero instance
 // You can reset it on login or logout
-export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined = undefined> {
+export class Z<
+	TSchema extends Schema = DefaultSchema,
+	MD extends CustomMutatorDefs | undefined = undefined
+> {
 	#zero = $state<Zero<TSchema, MD>>(null!);
 	#online = $state(true);
 	#onlineUnsubscribe?: () => void;
@@ -196,22 +202,22 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 	}
 
 	createQuery<TTable extends keyof TSchema['tables'] & string, TReturn>(
-		query: QueryDef<TSchema, TTable, TReturn>,
+		query: QueryDef<TTable, TSchema, TReturn>,
 		enabled: boolean = true
-	): Query<TSchema, TTable, TReturn, MD> {
+	): Query<TTable, TSchema, TReturn, MD> {
 		return new Query(query, this, enabled);
 	}
 
 	// Alias for createQuery - shorter syntax
 	q<TTable extends keyof TSchema['tables'] & string, TReturn>(
-		query: QueryDef<TSchema, TTable, TReturn>,
+		query: QueryDef<TTable, TSchema, TReturn>,
 		enabled: boolean = true
-	): Query<TSchema, TTable, TReturn, MD> {
+	): Query<TTable, TSchema, TReturn, MD> {
 		return this.createQuery(query, enabled);
 	}
 
 	preload<TTable extends keyof TSchema['tables'] & string>(
-		query: QueryDef<TSchema, TTable, unknown>,
+		query: QueryDef<TTable, TSchema, unknown>,
 		options?:
 			| {
 					/**
@@ -225,12 +231,15 @@ export class Z<TSchema extends Schema, MD extends CustomMutatorDefs | undefined 
 		return this.#zero.preload(query, options);
 	}
 
-	run<Q>(query: Q, runOptions?: RunOptions | undefined) {
+	run<TTable extends keyof TSchema['tables'] & string, TReturn>(
+		query: QueryDef<TTable, TSchema, TReturn>,
+		runOptions?: RunOptions | undefined
+	) {
 		return this.#zero.run(query, runOptions);
 	}
 
 	materialize<TTable extends keyof TSchema['tables'] & string, TReturn>(
-		query: QueryDef<TSchema, TTable, TReturn>
+		query: QueryDef<TTable, TSchema, TReturn>
 	): TypedView<HumanReadable<TReturn>> {
 		return this.#zero.materialize(query);
 	}

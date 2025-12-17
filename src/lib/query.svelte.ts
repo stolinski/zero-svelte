@@ -1,27 +1,34 @@
-import type { CustomMutatorDefs, HumanReadable, Query as QueryDef, Schema } from '@rocicorp/zero';
+import type {
+	CustomMutatorDefs,
+	DefaultSchema,
+	HumanReadable,
+	Query as QueryDef,
+	Schema
+} from '@rocicorp/zero';
+import { asQueryInternals } from '@rocicorp/zero/bindings';
 import type { ViewWrapper, Z } from './Z.svelte.js';
 import type { QueryResultDetails, ResultType } from './types.js';
 export type { QueryResultDetails, ResultType };
 export type QueryResult<TReturn> = readonly [HumanReadable<TReturn>, QueryResultDetails];
 
 export class Query<
-	TSchema extends Schema,
 	TTable extends keyof TSchema['tables'] & string,
-	TReturn,
+	TSchema extends Schema = DefaultSchema,
+	TReturn = unknown,
 	MD extends CustomMutatorDefs | undefined = undefined
 > {
-	#query_impl: QueryDef<TSchema, TTable, TReturn>;
+	#query_impl: QueryDef<TTable, TSchema, TReturn>;
 	#z: Z<TSchema, MD>;
-	#view = $state<ViewWrapper<TSchema, TTable, TReturn, MD> | undefined>();
+	#view = $state<ViewWrapper<TTable, TSchema, TReturn, MD> | undefined>();
 	#cleanup?: () => void;
 
 	constructor(
-		query: QueryDef<TSchema, TTable, TReturn>,
+		query: QueryDef<TTable, TSchema, TReturn>,
 		z: Z<TSchema, MD>,
 		enabled: boolean = true
 	) {
 		this.#z = z;
-		this.#query_impl = query as unknown as QueryDef<TSchema, TTable, TReturn>;
+		this.#query_impl = query;
 		this.#view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
 
 		// Create a persistent effect that keeps the ViewWrapper subscription alive
@@ -38,9 +45,8 @@ export class Query<
 		const view = this.#view; // Read $state (tracks dependency on view changes)
 		if (!view) {
 			// Return default based on query format
-			return (this.#query_impl.format.singular
-				? undefined
-				: []) as unknown as HumanReadable<TReturn>;
+			const internals = asQueryInternals(this.#query_impl);
+			return (internals.format.singular ? undefined : []) as unknown as HumanReadable<TReturn>;
 		}
 		// Read state without re-triggering subscription (already activated in constructor)
 		return view.dataOnly;
@@ -67,8 +73,8 @@ export class Query<
 	}
 
 	// Method to update the query
-	updateQuery(newQuery: QueryDef<TSchema, TTable, TReturn>, enabled: boolean = true) {
-		this.#query_impl = newQuery as unknown as QueryDef<TSchema, TTable, TReturn>;
+	updateQuery(newQuery: QueryDef<TTable, TSchema, TReturn>, enabled: boolean = true) {
+		this.#query_impl = newQuery;
 		this.#view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
 		// Setting #view (a $state) will trigger reactivity in components reading .data/.details
 	}

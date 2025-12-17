@@ -25,20 +25,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Workaround npm optional deps bug (Rollup native)
-        if: runner.os == 'Linux'
-        run: npm install --no-save --no-package-lock @rollup/rollup-linux-x64-gnu
+        run: pnpm install --frozen-lockfile
 
       - name: Check formatting
-        run: npm run format:check
+        run: pnpm run format:check
 
       - name: Detect publishable changes (gates changeset)
         uses: tj-actions/changed-files@v45
@@ -71,7 +71,7 @@ jobs:
             It looks like this PR changes publishable code but does not include a Changeset.
 
             To fix:
-            1. Run `npm run changeset` locally and choose patch/minor/major.
+            1. Run `pnpm changeset` locally and choose patch/minor/major.
             2. Commit the generated `.changeset/*.md` file to this PR.
 
             If this PR does not require a release (docs/CI/dev-only), add the `skip-release` label.
@@ -84,7 +84,7 @@ jobs:
           echo "This PR changes publishable code but does not include a Changeset."
           echo ""
           echo "To fix:"
-          echo "  1. Run 'npm run changeset' locally and choose patch/minor/major"
+          echo "  1. Run 'pnpm changeset' locally and choose patch/minor/major"
           echo "  2. Commit the generated .changeset/*.md file to this PR"
           echo ""
           echo "If this PR does not require a release (docs/CI/dev-only), add the 'skip-release' label."
@@ -95,11 +95,11 @@ jobs:
           echo "PUBLIC_SERVER=${{ secrets.PUBLIC_SERVER }}" > .env
 
       - name: Sync SvelteKit types
-        run: npm run sync
+        run: pnpm run sync
 
       - name: Lint (ESLint)
-        run: npm run lint
+        run: pnpm run lint
 
-      - run: npm run check
-      - run: npm run build
-      - run: npm run package
+      - run: pnpm run check
+      - run: pnpm run build
+      - run: pnpm run package

@@ -3,29 +3,19 @@
 	import { queries } from '../schema.js';
 	import { z, mutators } from './zero.svelte.js';
 
-	let show: 'ALL' | 'COMPLETED' = $state('ALL');
+	let showCompleted = $state(false);
+	let typeFilter = $state('');
 
-	// BASIC QUERY using defineQuery pattern
-	// Stable Query instance; update when filter changes via event
-	const todos = z.q(queries.todo.all());
-
-	function applyFilter(value: string) {
-		// For filtering, use the parameterized query
-		if (value) {
-			todos.updateQuery(queries.todo.byTypeId({ typeId: value }));
-		} else {
-			todos.updateQuery(queries.todo.all());
-		}
-	}
+	// Basic query - all todos
+	const todos = z.createQuery(queries.todo.all());
 
 	// Query using defineQuery
 	const types = z.createQuery(queries.type.all());
 
-	// Filtered query using $derived
-	const filtered_todos = $derived.by(() => {
-		const completed = show === 'COMPLETED';
-		return z.createQuery(queries.todo.byCompleted({ completed }));
-	});
+	// Filtered query using $derived - recreates when showCompleted changes
+	const filtered_todos = $derived(
+		z.createQuery(queries.todo.byCompleted({ completed: showCompleted }))
+	);
 
 	const randID = () => Math.random().toString(36).slice(2);
 
@@ -85,22 +75,14 @@
 	</form>
 	<h1>Todos</h1>
 	<label>
-		Show Completed:
-		<input
-			type="checkbox"
-			name="filter_option"
-			value="incomplete"
-			checked={show === 'COMPLETED'}
-			onchange={() => {
-				show = show === 'COMPLETED' ? 'ALL' : 'COMPLETED';
-			}}
-		/>
+		Show Completed Only:
+		<input type="checkbox" name="filter_option" bind:checked={showCompleted} />
 	</label>
 
 	<select
 		name="todo_type"
 		id="todo_type"
-		onchange={(e) => applyFilter((e.target as HTMLSelectElement).value)}
+		onchange={(e) => (typeFilter = (e.target as HTMLSelectElement).value)}
 	>
 		<option value="">All</option>
 		{#each types.data as type (type.id + 'option-list')}

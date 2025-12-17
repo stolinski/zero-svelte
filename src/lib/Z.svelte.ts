@@ -1,11 +1,14 @@
 import {
 	Zero,
 	type CustomMutatorDefs,
+	type DefaultContext,
 	type DefaultSchema,
 	type Entry,
 	type HumanReadable,
+	type PullRow,
 	type Query as QueryDef,
 	type QueryOrQueryRequest,
+	type ReadonlyJSONValue,
 	type RunOptions,
 	type Schema,
 	type TTL,
@@ -206,19 +209,29 @@ export class Z<
 		return this.#viewStore;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	createQuery<TTable extends keyof TSchema['tables'] & string, TReturn>(
-		query: QueryOrQueryRequest<TTable, any, any, TSchema, TReturn, any>,
+	createQuery<
+		TTable extends keyof TSchema['tables'] & string,
+		TInput extends ReadonlyJSONValue | undefined,
+		TOutput extends ReadonlyJSONValue | undefined,
+		TReturn = PullRow<TTable, TSchema>,
+		TContext = DefaultContext
+	>(
+		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		enabled: boolean = true
 	): Query<TTable, TSchema, TReturn, MD> {
-		const resolved = addContextToQuery(query, {});
+		const resolved = addContextToQuery(query, {} as TContext);
 		return new Query(resolved, this, enabled);
 	}
 
 	// Alias for createQuery - shorter syntax
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	q<TTable extends keyof TSchema['tables'] & string, TReturn>(
-		query: QueryOrQueryRequest<TTable, any, any, TSchema, TReturn, any>,
+	q<
+		TTable extends keyof TSchema['tables'] & string,
+		TInput extends ReadonlyJSONValue | undefined,
+		TOutput extends ReadonlyJSONValue | undefined,
+		TReturn = PullRow<TTable, TSchema>,
+		TContext = DefaultContext
+	>(
+		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		enabled: boolean = true
 	): Query<TTable, TSchema, TReturn, MD> {
 		return this.createQuery(query, enabled);

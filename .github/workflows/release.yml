@@ -28,38 +28,38 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Workaround npm optional deps bug (Rollup native)
-        if: runner.os == 'Linux'
-        run: npm install --no-save --no-package-lock @rollup/rollup-linux-x64-gnu
+        run: pnpm install --frozen-lockfile
 
       - name: Create .env for Release (SvelteKit static env)
         run: |
           echo "PUBLIC_SERVER=${{ secrets.PUBLIC_SERVER }}" > .env
 
       - name: Sync SvelteKit types
-        run: npm run sync
+        run: pnpm run sync
 
       - name: Format (Prettier write)
-        run: npm run format
+        run: pnpm run format
 
       - name: Lint (ESLint)
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Typecheck/Package
-        run: npm run check && npm run package
+        run: pnpm run check && pnpm run package
 
       - name: Version packages (Changesets)
-        run: npx changeset version
+        run: pnpm changeset version
 
       - name: Commit version files
         run: |
@@ -72,14 +72,10 @@ jobs:
           fi
 
       - name: Reinstall (in case lockfile changed)
-        run: npm ci
-
-      - name: Workaround npm optional deps bug (Rollup native)
-        if: runner.os == 'Linux'
-        run: npm install --no-save --no-package-lock @rollup/rollup-linux-x64-gnu
+        run: pnpm install --frozen-lockfile
 
       - name: Publish to npm
-        run: npm run release
+        run: pnpm run release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

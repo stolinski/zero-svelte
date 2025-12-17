@@ -12,6 +12,7 @@ import {
 	string,
 	table
 } from '@rocicorp/zero';
+import { type } from 'arktype';
 
 const types = table('type')
 	.columns({
@@ -47,14 +48,14 @@ export type Schema = typeof schema;
 // Create a typed ZQL builder
 export const zql = createBuilder(schema);
 
-// Define queries using Zero 0.25 pattern
+// Define queries using ArkType validators (Standard Schema compatible)
 export const queries = defineQueries({
 	todo: {
 		all: defineQuery(() => zql.todo.related('type')),
-		byTypeId: defineQuery<{ typeId: string }>(({ args: { typeId } }) =>
+		byTypeId: defineQuery(type({ typeId: 'string' }), ({ args: { typeId } }) =>
 			zql.todo.where('type_id', '=', typeId).related('type')
 		),
-		byCompleted: defineQuery<{ completed: boolean }>(({ args: { completed } }) =>
+		byCompleted: defineQuery(type({ completed: 'boolean' }), ({ args: { completed } }) =>
 			zql.todo.where('completed', '=', completed).related('type')
 		)
 	},

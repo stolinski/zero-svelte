@@ -5,13 +5,14 @@ import {
 	type Entry,
 	type HumanReadable,
 	type Query as QueryDef,
+	type QueryOrQueryRequest,
 	type RunOptions,
 	type Schema,
 	type TTL,
 	type TypedView,
 	type ZeroOptions
 } from '@rocicorp/zero';
-import { asQueryInternals } from '@rocicorp/zero/bindings';
+import { addContextToQuery, asQueryInternals } from '@rocicorp/zero/bindings';
 import { untrack } from 'svelte';
 import { createSubscriber, SvelteMap } from 'svelte/reactivity';
 import { Query } from './query.svelte.js';
@@ -205,16 +206,19 @@ export class Z<
 		return this.#viewStore;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	createQuery<TTable extends keyof TSchema['tables'] & string, TReturn>(
-		query: QueryDef<TTable, TSchema, TReturn>,
+		query: QueryOrQueryRequest<TTable, any, any, TSchema, TReturn, any>,
 		enabled: boolean = true
 	): Query<TTable, TSchema, TReturn, MD> {
-		return new Query(query, this, enabled);
+		const resolved = addContextToQuery(query, {});
+		return new Query(resolved, this, enabled);
 	}
 
 	// Alias for createQuery - shorter syntax
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	q<TTable extends keyof TSchema['tables'] & string, TReturn>(
-		query: QueryDef<TTable, TSchema, TReturn>,
+		query: QueryOrQueryRequest<TTable, any, any, TSchema, TReturn, any>,
 		enabled: boolean = true
 	): Query<TTable, TSchema, TReturn, MD> {
 		return this.createQuery(query, enabled);

@@ -3,9 +3,10 @@ import type {
 	DefaultSchema,
 	HumanReadable,
 	Query as QueryDef,
+	QueryOrQueryRequest,
 	Schema
 } from '@rocicorp/zero';
-import { asQueryInternals } from '@rocicorp/zero/bindings';
+import { addContextToQuery, asQueryInternals } from '@rocicorp/zero/bindings';
 import type { ViewWrapper, Z } from './Z.svelte.js';
 import type { QueryResultDetails, ResultType } from './types.js';
 export type { QueryResultDetails, ResultType };
@@ -72,9 +73,13 @@ export class Query<
 		return this.data;
 	}
 
-	// Method to update the query
-	updateQuery(newQuery: QueryDef<TTable, TSchema, TReturn>, enabled: boolean = true) {
-		this.#query_impl = newQuery;
+	// Method to update the query - accepts both Query and QueryRequest
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	updateQuery(
+		newQuery: QueryOrQueryRequest<any, any, any, TSchema, TReturn, any>,
+		enabled: boolean = true
+	) {
+		this.#query_impl = addContextToQuery(newQuery, {}) as QueryDef<TTable, TSchema, TReturn>;
 		this.#view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
 		// Setting #view (a $state) will trigger reactivity in components reading .data/.details
 	}

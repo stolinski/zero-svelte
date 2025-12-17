@@ -1,32 +1,31 @@
 <script lang="ts">
 	import './styles.css';
 	import { queries } from '../schema.js';
-	import { z } from './zero.svelte.js';
+	import { z, mutators } from './zero.svelte.js';
 
 	let show: 'ALL' | 'COMPLETED' = $state('ALL');
 
-	// BASIC QUERY
+	// BASIC QUERY using defineQuery pattern
 	// Stable Query instance; update when filter changes via event
-	const todos = z.q(z.query.todo.related('type')); // Using q alias!
+	const todos = z.q(queries.todo.all());
 
 	function applyFilter(value: string) {
-		const ft = value || undefined;
-		const q = ft
-			? z.query.todo.where('type_id', '=', ft).related('type')
-			: z.query.todo.related('type');
-		todos.updateQuery(q);
+		// For filtering, use the parameterized query
+		if (value) {
+			todos.updateQuery(queries.todo.byTypeId({ typeId: value }));
+		} else {
+			todos.updateQuery(queries.todo.all());
+		}
 	}
 
-	// BASIC QUERY + SYNCED QUERY API (soon to be deafult)
-	const types = z.createQuery(queries.allTypes());
+	// Query using defineQuery
+	const types = z.createQuery(queries.type.all());
 
-	const filtered_todos = $derived(
-		z.createQuery(
-			z.query.todo
-				.where('completed', '=', show === ('COMPLETED' as 'COMPLETED' | 'ALL') ? true : false)
-				.related('type')
-		)
-	);
+	// Filtered query using $derived
+	const filtered_todos = $derived.by(() => {
+		const completed = show === 'COMPLETED';
+		return z.createQuery(queries.todo.byCompleted({ completed }));
+	});
 
 	const randID = () => Math.random().toString(36).slice(2);
 
@@ -37,8 +36,10 @@
 		const todo_type = formData.get('todo_type') as string;
 		const id = randID();
 		if (todo_name) {
-			// BASIC MUTATION
-			z.mutate.todo.insert({ id, title: todo_name, completed: false, type_id: todo_type });
+			// MUTATION using defineMutator pattern
+			z.mutate(
+				mutators.todo.insert({ id, title: todo_name, completed: false, type_id: todo_type })
+			);
 			(event.target as HTMLFormElement).reset();
 		}
 	}
@@ -47,7 +48,7 @@
 		const checkbox = event.target as HTMLInputElement;
 		const id = checkbox.value;
 		const completed = checkbox.checked;
-		z.mutate.todo.update({ id, completed });
+		z.mutate(mutators.todo.update({ id, completed }));
 	}
 
 	function add_type(event: Event) {
@@ -56,7 +57,7 @@
 		const todo_type = formData.get('type') as string;
 		const id = randID();
 		if (todo_type) {
-			z.mutate.type.insert({ id, name: todo_type });
+			z.mutate(mutators.type.insert({ id, name: todo_type }));
 			(event.target as HTMLFormElement).reset();
 		}
 	}
@@ -118,9 +119,11 @@
 			</li>
 		{/each}
 	</ul>
+
+	<p>Just a quick demo to show the filtered_todos working.</p>
 	{#each filtered_todos.data as todo (todo.id + 'filtered')}
 		<div>
-			{todo.title} - {todo.type?.name} [{todo.completed ? 'Done' : 'Pending'}]
+			{todo.title} - {todo.type?.name}
 		</div>
 	{/each}
 </div>

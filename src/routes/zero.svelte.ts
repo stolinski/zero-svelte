@@ -1,10 +1,15 @@
 import { PUBLIC_SERVER } from '$env/static/public';
 import { Z } from '$lib/Z.svelte.js';
-import { schema, type Schema } from '../schema.js';
+import { mutators } from '../mutators.js';
+import { schema } from '../schema.js';
 
-export const z = new Z<Schema>({
-	server: PUBLIC_SERVER,
+export const z = new Z({
+	cacheURL: PUBLIC_SERVER,
 	schema,
+	mutators,
 	userID: 'anon',
 	kvStore: 'mem'
 });
+
+// Re-export for convenience
+export { mutators };

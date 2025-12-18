@@ -8,6 +8,7 @@
 	let searchText = $state('');
 
 	// Basic query - syncs all todos from server
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const todos = z.createQuery(queries.todo.all());
 
 	// Query using defineQuery

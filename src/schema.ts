@@ -52,9 +52,6 @@ export const zql = createBuilder(schema);
 export const queries = defineQueries({
 	todo: {
 		all: defineQuery(() => zql.todo.related('type')),
-		byTypeId: defineQuery(type({ typeId: 'string' }), ({ args: { typeId } }) =>
-			zql.todo.where('type_id', '=', typeId).related('type')
-		),
 		byCompleted: defineQuery(type({ completed: 'boolean' }), ({ args: { completed } }) =>
 			zql.todo.where('completed', '=', completed).related('type')
 		)

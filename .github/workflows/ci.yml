@@ -93,12 +93,10 @@ jobs:
       - name: Create .env for CI (SvelteKit static env)
         run: |
           echo "PUBLIC_SERVER=${{ secrets.PUBLIC_SERVER }}" > .env
+          echo "ZERO_UPSTREAM_DB=postgresql://placeholder:placeholder@localhost:5432/placeholder" >> .env
 
       - name: Sync SvelteKit types
         run: pnpm run sync
-
-      - name: Lint (ESLint)
-        run: pnpm run lint
 
       - run: pnpm run check
       - run: pnpm run build

@@ -74,8 +74,8 @@ export class Query<
 	}
 
 	// Method to update the query - accepts both Query and QueryRequest
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	updateQuery(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		newQuery: QueryOrQueryRequest<any, any, any, TSchema, TReturn, any>,
 		enabled: boolean = true
 	) {

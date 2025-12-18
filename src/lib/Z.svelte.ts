@@ -1,5 +1,7 @@
 import {
 	Zero,
+	type Connection,
+	type ConnectionState,
 	type CustomMutatorDefs,
 	type DefaultContext,
 	type DefaultSchema,
@@ -172,8 +174,8 @@ export class Z<
 	MD extends CustomMutatorDefs | undefined = undefined
 > {
 	#zero = $state<Zero<TSchema, MD>>(null!);
-	#online = $state(true);
-	#onlineUnsubscribe?: () => void;
+	#connectionState = $state<ConnectionState>({ name: 'connecting' });
+	#connectionUnsubscribe?: () => void;
 	#viewStore = new ViewStore();
 
 	constructor(z_options: ZeroOptions<TSchema, MD>) {
@@ -201,8 +203,41 @@ export class Z<
 		return this.#zero.userID;
 	}
 
+	/**
+	 * @deprecated Use `connectionState` instead for richer connection status information.
+	 */
 	get online(): boolean {
-		return this.#online;
+		return this.#connectionState.name === 'connected';
+	}
+
+	/**
+	 * The current connection state. One of:
+	 * - `connecting`: Actively trying to connect
+	 * - `connected`: Successfully connected to the server
+	 * - `disconnected`: Offline, will retry automatically
+	 * - `needs-auth`: Authentication required, call `connection.connect()` with auth
+	 * - `error`: Fatal error, call `connection.connect()` to retry
+	 * - `closed`: Instance was closed, create a new Zero instance
+	 */
+	get connectionState(): ConnectionState {
+		return this.#connectionState;
+	}
+
+	/**
+	 * The connection API for managing Zero's connection lifecycle.
+	 * Use this to manually control connections and handle auth failures.
+	 *
+	 * @example
+	 * ```ts
+	 * // Resume connection from error state
+	 * await z.connection.connect();
+	 *
+	 * // Resume with new auth token
+	 * await z.connection.connect({ auth: newToken });
+	 * ```
+	 */
+	get connection(): Connection {
+		return this.#zero.connection;
 	}
 
 	get viewStore(): ViewStore {
@@ -274,18 +309,22 @@ export class Z<
 
 	build(z_options: ZeroOptions<TSchema, MD>) {
 		// Clean up previous subscription if it exists
-		this.#onlineUnsubscribe?.();
+		this.#connectionUnsubscribe?.();
+
 		// Create new Zero instance
 		this.#zero = new Zero(z_options);
 
-		// Subscribe to online status changes
-		this.#onlineUnsubscribe = this.#zero.onOnline((online) => {
-			this.#online = online;
+		// Subscribe to connection state changes
+		this.#connectionUnsubscribe = this.#zero.connection.state.subscribe((state) => {
+			this.#connectionState = state;
 		});
+
+		// Initialize connection state
+		this.#connectionState = this.#zero.connection.state.current;
 	}
 
 	close() {
-		this.#onlineUnsubscribe?.();
+		this.#connectionUnsubscribe?.();
 		this.#zero.close();
 	}
 }

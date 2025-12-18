@@ -70,11 +70,25 @@
 	}
 </script>
 
-{#if z.online}
-	<div>Connected</div>
-{:else}
-	<div>Offline</div>
-{/if}
+<!-- Connection State Demo -->
+<!-- z.connectionState provides rich connection status (analogous to React's useConnectionState hook) -->
+<!-- States: connecting | connected | disconnected | needs-auth | error | closed -->
+<div class="connection-status">
+	{#if z.connectionState.name === 'connected'}
+		<span class="status connected">Connected</span>
+	{:else if z.connectionState.name === 'connecting'}
+		<span class="status connecting">Connecting...</span>
+	{:else if z.connectionState.name === 'disconnected'}
+		<span class="status disconnected">Disconnected: {z.connectionState.reason}</span>
+	{:else if z.connectionState.name === 'error'}
+		<span class="status error">
+			Error: {z.connectionState.reason}
+			<button onclick={() => z.connection.connect()}>Retry</button>
+		</span>
+	{:else if z.connectionState.name === 'closed'}
+		<span class="status closed">Closed</span>
+	{/if}
+</div>
 
 <div>
 	<form onsubmit={add_type}>

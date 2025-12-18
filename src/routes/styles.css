@@ -105,3 +105,63 @@ input[type='checkbox'] {
 select {
 	cursor: pointer;
 }
+
+/* Connection Status Styles */
+.connection-status {
+	margin-bottom: var(--spacing-md);
+	padding: var(--spacing-sm) var(--spacing-md);
+	border-radius: var(--radius-sm);
+	background: var(--input-background);
+	box-shadow: var(--shadow-sm);
+}
+
+.connection-status .status {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	font-weight: 500;
+}
+
+.connection-status .status::before {
+	content: '';
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+}
+
+.connection-status .connected::before {
+	background-color: #22c55e;
+}
+
+.connection-status .connecting::before {
+	background-color: #eab308;
+	animation: pulse 1s infinite;
+}
+
+.connection-status .disconnected::before {
+	background-color: #f97316;
+}
+
+.connection-status .needs-auth::before,
+.connection-status .error::before {
+	background-color: #ef4444;
+}
+
+.connection-status .closed::before {
+	background-color: #6b7280;
+}
+
+.connection-status button {
+	padding: var(--spacing-xs) var(--spacing-sm);
+	font-size: 0.875rem;
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+}

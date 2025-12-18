@@ -1,51 +1,228 @@
-Zero Svelte (zero-svelte)
+# Zero Svelte (zero-svelte)
 
-What this library is:
-- Svelte 5 bindings for @rocicorp/zero, a local-first sync database.
-- Provides a thin Svelte-friendly wrapper so Zero queries become reactive in components.
-- Exposes two main APIs:
-  - Z: owns a Zero instance and places it in Svelte context under the key "z".
-  - Query: materializes a Zero query and returns a reactive snapshot for rendering.
+## What this library is
+- Svelte 5 bindings for @rocicorp/zero (v0.25+), a local-first sync database
+- Provides reactive Svelte wrappers so Zero queries automatically update components
+- Main exports:
+  - `Z` class: Wraps a Zero instance with Svelte reactivity
+  - `Query` class: Materializes a Zero query into reactive `.data` and `.details`
+  - `Connection` and `ConnectionState` types: For connection management
 
-When to use it:
-- Build Svelte apps that are local-first, offline-capable, with optimistic updates and automatic sync via Zero.
+## When to use it
+- Build Svelte 5 apps that are local-first, offline-capable, with optimistic updates and automatic sync via Zero
 
-Install:
-- npm install zero-svelte (peer: Svelte 5+, Node 22+)
-- Follow Zero docs to set up schema, server URL, and environment.
+## Install
+```bash
+npm install zero-svelte
+# Peers: Svelte 5+, @rocicorp/zero ^0.25
+```
 
-Basic setup:
-- Define your Zero Schema type (e.g., export type Schema = typeof schema).
-- Create a single Z<Schema>(options) with userID, server, and schema.
-- Instantiate Z in a Svelte component so it can call setContext('z', z) automatically. If you instantiate elsewhere, manually call setContext('z', z) in a component.
-- In SvelteKit, disable SSR where you use Zero (e.g., +layout.server.ts → export const ssr = false).
+## Schema Setup (Zero 0.25 pattern)
 
-Using queries:
-- Construct a Query with a Zero query definition, e.g., new Query(z.current.query.todo).
-- Read the current snapshot from query.current in your template; it updates automatically as data changes.
-- Check query.details.type to see materialization status ("unknown" → "complete").
-- Gate work until needed by passing enabled=false: new Query(..., false), then enable later.
-- If your query definition changes (e.g., parameters), call updateQuery(newQuery, enabled?).
+```ts
+// schema.ts
+import { createBuilder, createSchema, defineQueries, defineQuery, table, string, boolean } from '@rocicorp/zero';
+import { type } from 'arktype'; // or zod
 
-Mutations:
-- Use Zero’s standard mutators via the wrapped instance, e.g., z.current.mutate.todo.insert|update|delete(...).
-- This library does not change Zero’s query/mutator APIs; it only wires them into Svelte reactivity.
+const todos = table('todo')
+  .columns({ id: string(), title: string(), completed: boolean() })
+  .primaryKey('id');
 
-Lifecycle:
-- Rebuild the underlying Zero instance when auth/config changes with z.build(newOptions).
-- Close the instance when done with z.close().
+export const schema = createSchema({ tables: [todos] });
+export type Schema = typeof schema;
 
-Types:
-- Use Z and Query with your Schema type for fully typed queries and mutations. Types are preserved from @rocicorp/zero.
+// Typed ZQL builder for raw queries
+export const zql = createBuilder(schema);
 
-Notes:
-- Client-only usage; keep SSR disabled where used.
-- Internally, views are shared by (query.hash + userID) to avoid redundant materialization across components.
+// Reusable queries with validators
+export const queries = defineQueries({
+  todo: {
+    all: defineQuery(() => zql.todo),
+    byCompleted: defineQuery(
+      type({ completed: 'boolean' }),
+      ({ args: { completed } }) => zql.todo.where('completed', '=', completed)
+    )
+  }
+});
 
-Quick mental model:
-- Z is "your Zero in Svelte context" at z.current.
-- Query bridges "Zero query" → "reactive data you can render".
-- Mutations go through z.current.mutate.* and update any materialized queries.
+// Register as default type (removes need for explicit generics)
+declare module '@rocicorp/zero' {
+  interface DefaultTypes {
+    schema: Schema;
+  }
+}
+```
 
-Learn more:
+## Z Instance Setup
+
+```ts
+// zero.svelte.ts
+import { Z } from 'zero-svelte';
+import { schema } from './schema';
+import { mutators } from './mutators';
+
+export const z = new Z({
+  cacheURL: 'http://localhost:4848',
+  schema,
+  mutators,
+  userID: 'anon',
+  kvStore: 'mem'
+});
+
+export { mutators };
+```
+
+## Disable SSR
+```ts
+// +page.ts or +layout.ts
+export const ssr = false;
+```
+
+## Using Queries
+
+### Basic query with defineQuery
+```svelte
+<script lang="ts">
+  import { z } from '$lib/zero.svelte';
+  import { queries } from './schema';
+
+  const todos = z.createQuery(queries.todo.all());
+</script>
+
+{#each todos.data as todo (todo.id)}
+  <div>{todo.title}</div>
+{/each}
+```
+
+### Reactive queries with $derived
+```svelte
+<script lang="ts">
+  let showCompleted = $state(false);
+
+  // Recreates query when showCompleted changes
+  const filtered = $derived(z.createQuery(queries.todo.byCompleted({ completed: showCompleted })));
+</script>
+```
+
+### Raw ZQL for local-only filtering (no server round-trip)
+```svelte
+<script lang="ts">
+  import { zql } from './schema';
+
+  let search = $state('');
+
+  const results = $derived.by(() => {
+    let q = zql.todo;
+    if (search) q = q.where('title', 'ILIKE', `%${search}%`);
+    return z.createQuery(q);
+  });
+</script>
+```
+
+### Query with enabled flag
+```ts
+// Won't materialize until enabled is true
+const todos = z.createQuery(queries.todo.all(), false);
+```
+
+### Updating a query in place
+```ts
+const todos = z.createQuery(zql.todo);
+// Later:
+todos.updateQuery(zql.todo.where('completed', '=', true));
+```
+
+## Query API
+- `query.data` - The reactive query results (array or single object)
+- `query.details` - Status object with `.type`: 'unknown' | 'complete'
+- `query.updateQuery(newQuery, enabled?)` - Update query definition in place
+- `query.destroy()` - Clean up subscriptions
+
+## Mutations
+
+Use Zero's mutator pattern:
+```ts
+import { z, mutators } from '$lib/zero.svelte';
+
+// Insert
+z.mutate(mutators.todo.insert({ id: '1', title: 'New', completed: false }));
+
+// Update
+z.mutate(mutators.todo.update({ id: '1', completed: true }));
+
+// Delete
+z.mutate(mutators.todo.delete({ id: '1' }));
+```
+
+## Connection State (Zero 0.25+)
+
+Analogous to React's `useConnectionState()` hook:
+
+```svelte
+<script lang="ts">
+  import { z } from '$lib/zero.svelte';
+</script>
+
+{#if z.connectionState.name === 'connected'}
+  <span>Connected</span>
+{:else if z.connectionState.name === 'connecting'}
+  <span>Connecting...</span>
+{:else if z.connectionState.name === 'disconnected'}
+  <span>Offline: {z.connectionState.reason}</span>
+{:else if z.connectionState.name === 'needs-auth'}
+  <button onclick={() => z.connection.connect({ auth: newToken })}>Re-authenticate</button>
+{:else if z.connectionState.name === 'error'}
+  <button onclick={() => z.connection.connect()}>Retry</button>
+{/if}
+```
+
+### Connection states
+- `connecting` - Actively trying to connect
+- `connected` - Successfully connected
+- `disconnected` - Offline, auto-retrying
+- `needs-auth` - Auth failed, call `z.connection.connect({ auth })` with new token
+- `error` - Fatal error, call `z.connection.connect()` to retry
+- `closed` - Instance closed, create new Z
+
+## Z Class API
+
+### Properties
+- `z.query` - Zero's query builders (e.g., `z.query.todo`)
+- `z.mutate` - Execute mutations
+- `z.mutateBatch` - Batch multiple mutations
+- `z.connectionState` - Current connection state (reactive)
+- `z.connection` - Connection API with `.connect()` method
+- `z.clientID` - Unique client identifier
+- `z.userID` - Current user ID
+- `z.viewStore` - Internal view management
+- `z.online` - _(deprecated)_ Use `connectionState` instead
+- `z.current` - _(deprecated)_ Direct Zero instance access
+
+### Methods
+- `z.createQuery(query, enabled?)` - Create a reactive Query
+- `z.q(query, enabled?)` - Alias for createQuery
+- `z.preload(query, options?)` - Preload data into cache
+- `z.run(query, options?)` - Execute query once (returns Promise)
+- `z.materialize(query)` - Create a TypedView directly
+- `z.build(options)` - Rebuild Zero instance (for auth changes)
+- `z.close()` - Close and cleanup
+
+## Lifecycle
+
+```ts
+// Rebuild when auth changes
+z.build({ ...options, auth: newToken });
+
+// Clean up when done
+z.close();
+```
+
+## Key Implementation Details
+- Client-only: SSR must be disabled
+- Views are shared by query hash to avoid redundant materialization
+- Uses Svelte 5 runes ($state, $derived, $effect) for reactivity
+- Query subscriptions are lazy - only materialize when `.data` is accessed
+
+## Links
 - Zero docs: https://zero.rocicorp.dev/docs/introduction
+- Connection state: https://zero.rocicorp.dev/docs/connection

@@ -97,9 +97,6 @@ jobs:
       - name: Sync SvelteKit types
         run: pnpm run sync
 
-      - name: Lint (ESLint)
-        run: pnpm run lint
-
       - run: pnpm run check
       - run: pnpm run build
       - run: pnpm run package

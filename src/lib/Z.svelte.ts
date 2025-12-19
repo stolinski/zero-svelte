@@ -203,6 +203,10 @@ export class Z<
 		return this.#zero.userID;
 	}
 
+	// Add getter
+	get context() {
+		return this.#zero.context;
+	}
 	/**
 	 * @deprecated Use `connectionState` instead for richer connection status information.
 	 */
@@ -254,9 +258,15 @@ export class Z<
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		enabled: boolean = true
 	): Query<TTable, TSchema, TReturn, MD> {
-		const resolved = addContextToQuery(query, {} as TContext);
+		const resolved = addContextToQuery(query, this.context as TContext);
 		return new Query(resolved, this, enabled);
 	}
+
+	// // Fix createQuery
+	// createQuery(query, enabled = true) {
+	//     const resolved = addContextToQuery(query, this.context);  // use this.context
+	//     return new Query(resolved, this, enabled);
+	// }
 
 	// Alias for createQuery - shorter syntax
 	q<

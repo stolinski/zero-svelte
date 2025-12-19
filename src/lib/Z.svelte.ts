@@ -282,8 +282,14 @@ export class Z<
 		return this.createQuery(query, enabled);
 	}
 
-	preload<TTable extends keyof TSchema['tables'] & string>(
-		query: QueryDef<TTable, TSchema, unknown>,
+	preload<
+		TTable extends keyof TSchema['tables'] & string,
+		TInput extends ReadonlyJSONValue | undefined,
+		TOutput extends ReadonlyJSONValue | undefined,
+		TReturn = PullRow<TTable, TSchema>,
+		TContext = DefaultContext
+	>(
+		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		options?:
 			| {
 					/**
@@ -294,20 +300,35 @@ export class Z<
 			  }
 			| undefined
 	): { cleanup: () => void; complete: Promise<void> } {
-		return this.#zero.preload(query, options);
+		const resolved = addContextToQuery(query, this.context as TContext);
+		return this.#zero.preload(resolved, options);
 	}
 
-	run<TTable extends keyof TSchema['tables'] & string, TReturn>(
-		query: QueryDef<TTable, TSchema, TReturn>,
+	run<
+		TTable extends keyof TSchema['tables'] & string,
+		TInput extends ReadonlyJSONValue | undefined,
+		TOutput extends ReadonlyJSONValue | undefined,
+		TReturn = PullRow<TTable, TSchema>,
+		TContext = DefaultContext
+	>(
+		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		runOptions?: RunOptions | undefined
 	) {
-		return this.#zero.run(query, runOptions);
+		const resolved = addContextToQuery(query, this.context as TContext);
+		return this.#zero.run(resolved, runOptions);
 	}
 
-	materialize<TTable extends keyof TSchema['tables'] & string, TReturn>(
-		query: QueryDef<TTable, TSchema, TReturn>
+	materialize<
+		TTable extends keyof TSchema['tables'] & string,
+		TInput extends ReadonlyJSONValue | undefined,
+		TOutput extends ReadonlyJSONValue | undefined,
+		TReturn = PullRow<TTable, TSchema>,
+		TContext = DefaultContext
+	>(
+		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>
 	): TypedView<HumanReadable<TReturn>> {
-		return this.#zero.materialize(query);
+		const resolved = addContextToQuery(query, this.context as TContext);
+		return this.#zero.materialize(resolved);
 	}
 
 	/**

@@ -1,5 +1,11 @@
 # zero-svelte
 
+## 1.2.1
+
+### Patch Changes
+
+- [#65](https://github.com/stolinski/zero-svelte/pull/65) [`9ae8d5c`](https://github.com/stolinski/zero-svelte/commit/9ae8d5c22d73ab1b697f4eb4fb118692f51ca0ed) Thanks [@stolinski](https://github.com/stolinski)! - Fix context passthrough
+
 ## 1.2.0
 
 ### Minor Changes

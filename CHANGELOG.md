@@ -1,5 +1,13 @@
 # zero-svelte
 
+## 1.2.2
+
+### Patch Changes
+
+- [#67](https://github.com/stolinski/zero-svelte/pull/67) [`049928e`](https://github.com/stolinski/zero-svelte/commit/049928e5cdcf0ea341ec4e09fb3b7840fdd29786) Thanks [@stolinski](https://github.com/stolinski)! - Fix preload(), run(), and materialize() methods to work with synced queries from defineQuery()
+
+  These methods now correctly resolve synced queries using addContextToQuery() before passing to the underlying Zero instance, matching the behavior of createQuery(). Previously, passing a query created with defineQuery() to these methods would fail with "query[delegateSymbol] is not a function".
+
 ## 1.2.1
 
 ### Patch Changes

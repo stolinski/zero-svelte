@@ -1,10 +1,12 @@
 import type {
+	BaseDefaultContext,
+	BaseDefaultSchema,
 	CustomMutatorDefs,
+	DefaultContext,
 	DefaultSchema,
 	HumanReadable,
 	Query as QueryDef,
-	QueryOrQueryRequest,
-	Schema
+	QueryOrQueryRequest
 } from '@rocicorp/zero';
 import { addContextToQuery, asQueryInternals } from '@rocicorp/zero/bindings';
 import type { ViewWrapper, Z } from './Z.svelte.js';
@@ -14,18 +16,19 @@ export type QueryResult<TReturn> = readonly [HumanReadable<TReturn>, QueryResult
 
 export class Query<
 	TTable extends keyof TSchema['tables'] & string,
-	TSchema extends Schema = DefaultSchema,
+	TSchema extends BaseDefaultSchema = DefaultSchema,
 	TReturn = unknown,
-	MD extends CustomMutatorDefs | undefined = undefined
+	MD extends CustomMutatorDefs | undefined = undefined,
+	TContext extends BaseDefaultContext = DefaultContext
 > {
 	#query_impl: QueryDef<TTable, TSchema, TReturn>;
-	#z: Z<TSchema, MD>;
-	#view = $state<ViewWrapper<TTable, TSchema, TReturn, MD> | undefined>();
+	#z: Z<TSchema, MD, TContext>;
+	#view = $state<ViewWrapper<TTable, TSchema, TReturn, MD, TContext> | undefined>();
 	#cleanup?: () => void;
 
 	constructor(
 		query: QueryDef<TTable, TSchema, TReturn>,
-		z: Z<TSchema, MD>,
+		z: Z<TSchema, MD, TContext>,
 		enabled: boolean = true
 	) {
 		this.#z = z;
@@ -76,10 +79,14 @@ export class Query<
 	// Method to update the query - accepts both Query and QueryRequest
 	updateQuery(
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		newQuery: QueryOrQueryRequest<any, any, any, TSchema, TReturn, any>,
+		newQuery: QueryOrQueryRequest<any, any, any, TSchema, TReturn, TContext>,
 		enabled: boolean = true
 	) {
-		this.#query_impl = addContextToQuery(newQuery, {}) as QueryDef<TTable, TSchema, TReturn>;
+		this.#query_impl = addContextToQuery(newQuery, this.#z.context) as QueryDef<
+			TTable,
+			TSchema,
+			TReturn
+		>;
 		this.#view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
 		// Setting #view (a $state) will trigger reactivity in components reading .data/.details
 	}

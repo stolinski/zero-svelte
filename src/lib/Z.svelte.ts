@@ -1,5 +1,7 @@
 import {
 	Zero,
+	type BaseDefaultContext,
+	type BaseDefaultSchema,
 	type Connection,
 	type ConnectionState,
 	type CustomMutatorDefs,
@@ -12,7 +14,6 @@ import {
 	type QueryOrQueryRequest,
 	type ReadonlyJSONValue,
 	type RunOptions,
-	type Schema,
 	type TTL,
 	type TypedView,
 	type ZeroOptions
@@ -28,14 +29,15 @@ export class ViewStore {
 
 	getView<
 		TTable extends keyof TSchema['tables'] & string,
-		TSchema extends Schema,
+		TSchema extends BaseDefaultSchema,
 		TReturn,
-		MD extends CustomMutatorDefs | undefined = undefined
+		MD extends CustomMutatorDefs | undefined = undefined,
+		TContext extends BaseDefaultContext = DefaultContext
 	>(
-		z: Z<TSchema, MD>,
+		z: Z<TSchema, MD, TContext>,
 		query: QueryDef<TTable, TSchema, TReturn>,
 		enabled: boolean = true
-	): ViewWrapper<TTable, TSchema, TReturn, MD> {
+	): ViewWrapper<TTable, TSchema, TReturn, MD, TContext> {
 		if (!enabled) {
 			return new ViewWrapper(
 				z,
@@ -50,7 +52,9 @@ export class ViewStore {
 
 		// Use untrack to prevent state mutations from being tracked during $derived
 		return untrack(() => {
-			let existing = this.#views.get(hash) as ViewWrapper<TTable, TSchema, TReturn, MD> | undefined;
+			let existing = this.#views.get(hash) as
+				| ViewWrapper<TTable, TSchema, TReturn, MD, TContext>
+				| undefined;
 
 			if (!existing) {
 				existing = new ViewWrapper(
@@ -76,9 +80,10 @@ export class ViewStore {
 
 export class ViewWrapper<
 	TTable extends keyof TSchema['tables'] & string,
-	TSchema extends Schema,
+	TSchema extends BaseDefaultSchema,
 	TReturn,
-	MD extends CustomMutatorDefs | undefined = undefined
+	MD extends CustomMutatorDefs | undefined = undefined,
+	TContext extends BaseDefaultContext = DefaultContext
 > {
 	#view: TypedView<HumanReadable<TReturn>> | undefined;
 	#data = $state<Entry>({ '': undefined });
@@ -87,9 +92,9 @@ export class ViewWrapper<
 	readonly #refCountMap = new WeakMap<Entry, number>();
 
 	constructor(
-		private z: Z<TSchema, MD>,
+		private z: Z<TSchema, MD, TContext>,
 		private query: QueryDef<TTable, TSchema, TReturn>,
-		private onMaterialized: (view: ViewWrapper<TTable, TSchema, TReturn, MD>) => void,
+		private onMaterialized: (view: ViewWrapper<TTable, TSchema, TReturn, MD, TContext>) => void,
 		private onDematerialized: () => void,
 		private enabled: boolean
 	) {
@@ -170,28 +175,29 @@ export class ViewWrapper<
 // This is the state of the Zero instance
 // You can reset it on login or logout
 export class Z<
-	TSchema extends Schema = DefaultSchema,
-	MD extends CustomMutatorDefs | undefined = undefined
+	TSchema extends BaseDefaultSchema = DefaultSchema,
+	MD extends CustomMutatorDefs | undefined = undefined,
+	TContext extends BaseDefaultContext = DefaultContext
 > {
-	#zero = $state<Zero<TSchema, MD>>(null!);
+	#zero = $state<Zero<TSchema, MD, TContext>>(null!);
 	#connectionState = $state<ConnectionState>({ name: 'connecting' });
 	#connectionUnsubscribe?: () => void;
 	#viewStore = new ViewStore();
 
-	constructor(z_options: ZeroOptions<TSchema, MD>) {
+	constructor(z_options: ZeroOptions<TSchema, MD, TContext>) {
 		this.build(z_options);
 	}
 
 	// Reactive getter that proxy to internal Zero instance
-	get query(): Zero<TSchema, MD>['query'] {
+	get query(): Zero<TSchema, MD, TContext>['query'] {
 		return this.#zero.query;
 	}
 
-	get mutate(): Zero<TSchema, MD>['mutate'] {
+	get mutate(): Zero<TSchema, MD, TContext>['mutate'] {
 		return this.#zero.mutate;
 	}
 
-	get mutateBatch(): Zero<TSchema, MD>['mutateBatch'] {
+	get mutateBatch(): Zero<TSchema, MD, TContext>['mutateBatch'] {
 		return this.#zero.mutateBatch;
 	}
 
@@ -199,7 +205,7 @@ export class Z<
 		return this.#zero.clientID;
 	}
 
-	get userID(): string {
+	get userID(): string | undefined {
 		return this.#zero.userID;
 	}
 
@@ -252,33 +258,25 @@ export class Z<
 		TTable extends keyof TSchema['tables'] & string,
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
-		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TReturn = PullRow<TTable, TSchema>
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		enabled: boolean = true
-	): Query<TTable, TSchema, TReturn, MD> {
-		const resolved = addContextToQuery(query, this.context as TContext);
+	): Query<TTable, TSchema, TReturn, MD, TContext> {
+		const resolved = addContextToQuery(query, this.context);
 		return new Query(resolved, this, enabled);
 	}
-
-	// // Fix createQuery
-	// createQuery(query, enabled = true) {
-	//     const resolved = addContextToQuery(query, this.context);  // use this.context
-	//     return new Query(resolved, this, enabled);
-	// }
 
 	// Alias for createQuery - shorter syntax
 	q<
 		TTable extends keyof TSchema['tables'] & string,
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
-		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TReturn = PullRow<TTable, TSchema>
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		enabled: boolean = true
-	): Query<TTable, TSchema, TReturn, MD> {
+	): Query<TTable, TSchema, TReturn, MD, TContext> {
 		return this.createQuery(query, enabled);
 	}
 
@@ -286,8 +284,7 @@ export class Z<
 		TTable extends keyof TSchema['tables'] & string,
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
-		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TReturn = PullRow<TTable, TSchema>
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		options?:
@@ -300,7 +297,7 @@ export class Z<
 			  }
 			| undefined
 	): { cleanup: () => void; complete: Promise<void> } {
-		const resolved = addContextToQuery(query, this.context as TContext);
+		const resolved = addContextToQuery(query, this.context);
 		return this.#zero.preload(resolved, options);
 	}
 
@@ -308,13 +305,12 @@ export class Z<
 		TTable extends keyof TSchema['tables'] & string,
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
-		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TReturn = PullRow<TTable, TSchema>
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		runOptions?: RunOptions | undefined
 	) {
-		const resolved = addContextToQuery(query, this.context as TContext);
+		const resolved = addContextToQuery(query, this.context);
 		return this.#zero.run(resolved, runOptions);
 	}
 
@@ -322,23 +318,22 @@ export class Z<
 		TTable extends keyof TSchema['tables'] & string,
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
-		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TReturn = PullRow<TTable, TSchema>
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>
 	): TypedView<HumanReadable<TReturn>> {
-		const resolved = addContextToQuery(query, this.context as TContext);
+		const resolved = addContextToQuery(query, this.context);
 		return this.#zero.materialize(resolved);
 	}
 
 	/**
 	 * @deprecated Use direct accessors or methods instead. ie z.query, z.mutate, z.build
 	 */
-	get current(): Zero<TSchema, MD> {
+	get current(): Zero<TSchema, MD, TContext> {
 		return this.#zero;
 	}
 
-	build(z_options: ZeroOptions<TSchema, MD>) {
+	build(z_options: ZeroOptions<TSchema, MD, TContext>) {
 		// Clean up previous subscription if it exists
 		this.#connectionUnsubscribe?.();
 

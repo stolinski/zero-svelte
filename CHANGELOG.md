@@ -1,5 +1,33 @@
 # zero-svelte
 
+## 1.2.2
+
+### Patch Changes
+
+- [#67](https://github.com/stolinski/zero-svelte/pull/67) [`049928e`](https://github.com/stolinski/zero-svelte/commit/049928e5cdcf0ea341ec4e09fb3b7840fdd29786) Thanks [@stolinski](https://github.com/stolinski)! - Fix preload(), run(), and materialize() methods to work with synced queries from defineQuery()
+
+  These methods now correctly resolve synced queries using addContextToQuery() before passing to the underlying Zero instance, matching the behavior of createQuery(). Previously, passing a query created with defineQuery() to these methods would fail with "query[delegateSymbol] is not a function".
+
+## 1.2.1
+
+### Patch Changes
+
+- [#65](https://github.com/stolinski/zero-svelte/pull/65) [`9ae8d5c`](https://github.com/stolinski/zero-svelte/commit/9ae8d5c22d73ab1b697f4eb4fb118692f51ca0ed) Thanks [@stolinski](https://github.com/stolinski)! - Fix context passthrough
+
+## 1.2.0
+
+### Minor Changes
+
+- [#62](https://github.com/stolinski/zero-svelte/pull/62) [`06bda99`](https://github.com/stolinski/zero-svelte/commit/06bda998b16c27b45545fc358503cd73d71947a3) Thanks [@stolinski](https://github.com/stolinski)! - Update to Zero 0.25
+  - Update to `@rocicorp/zero` 0.25 which removes the need for explicit schema types
+  - Add `connectionState` getter exposing rich connection status (`connecting`, `connected`, `disconnected`, `needs-auth`, `error`, `closed`)
+  - Add `connection` getter for manual connection control (e.g., `z.connection.connect()` for auth retry)
+  - Re-export `Connection` and `ConnectionState` types from package
+  - Deprecate `online` getter in favor of `connectionState`
+  - Remove internal `onOnline` callback usage, now deriving online state from `connection.state`
+
+  This aligns with React Zero's `useConnectionState()` hook API.
+
 ## 1.1.2
 
 ### Patch Changes

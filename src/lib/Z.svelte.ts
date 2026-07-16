@@ -1,5 +1,7 @@
 import {
 	Zero,
+	type BaseDefaultContext,
+	type BaseDefaultSchema,
 	type Connection,
 	type ConnectionState,
 	type CustomMutatorDefs,
@@ -12,7 +14,6 @@ import {
 	type QueryOrQueryRequest,
 	type ReadonlyJSONValue,
 	type RunOptions,
-	type Schema,
 	type TTL,
 	type TypedView,
 	type ZeroOptions
@@ -28,7 +29,7 @@ export class ViewStore {
 
 	getView<
 		TTable extends keyof TSchema['tables'] & string,
-		TSchema extends Schema,
+		TSchema extends BaseDefaultSchema,
 		TReturn,
 		MD extends CustomMutatorDefs | undefined = undefined
 	>(
@@ -76,7 +77,7 @@ export class ViewStore {
 
 export class ViewWrapper<
 	TTable extends keyof TSchema['tables'] & string,
-	TSchema extends Schema,
+	TSchema extends BaseDefaultSchema,
 	TReturn,
 	MD extends CustomMutatorDefs | undefined = undefined
 > {
@@ -170,7 +171,7 @@ export class ViewWrapper<
 // This is the state of the Zero instance
 // You can reset it on login or logout
 export class Z<
-	TSchema extends Schema = DefaultSchema,
+	TSchema extends BaseDefaultSchema = DefaultSchema,
 	MD extends CustomMutatorDefs | undefined = undefined
 > {
 	#zero = $state<Zero<TSchema, MD>>(null!);
@@ -199,7 +200,7 @@ export class Z<
 		return this.#zero.clientID;
 	}
 
-	get userID(): string {
+	get userID(): string | undefined {
 		return this.#zero.userID;
 	}
 
@@ -253,7 +254,7 @@ export class Z<
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
 		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TContext extends BaseDefaultContext = DefaultContext
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		enabled: boolean = true
@@ -274,7 +275,7 @@ export class Z<
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
 		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TContext extends BaseDefaultContext = DefaultContext
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		enabled: boolean = true
@@ -287,7 +288,7 @@ export class Z<
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
 		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TContext extends BaseDefaultContext = DefaultContext
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		options?:
@@ -309,7 +310,7 @@ export class Z<
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
 		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TContext extends BaseDefaultContext = DefaultContext
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		runOptions?: RunOptions | undefined
@@ -323,7 +324,7 @@ export class Z<
 		TInput extends ReadonlyJSONValue | undefined,
 		TOutput extends ReadonlyJSONValue | undefined,
 		TReturn = PullRow<TTable, TSchema>,
-		TContext = DefaultContext
+		TContext extends BaseDefaultContext = DefaultContext
 	>(
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>
 	): TypedView<HumanReadable<TReturn>> {

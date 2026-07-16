@@ -21,6 +21,9 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# Zero cache replica
+zero.db*
+
 # Local AI docs
 .ai/
 CLAUDE.md

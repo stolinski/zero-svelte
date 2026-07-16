@@ -6,10 +6,5 @@ export default defineConfig({
 	server: {
 		port: 9370,
 		strictPort: true
-	},
-	optimizeDeps: {
-		esbuildOptions: {
-			target: 'es2022'
-		}
 	}
 });

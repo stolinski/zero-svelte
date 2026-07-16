@@ -6,3 +6,6 @@ yarn.lock
 # Changesets
 .changeset/*.md
 CHANGELOG.md
+
+# Local tooling
+.claude/

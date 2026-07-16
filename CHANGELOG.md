@@ -1,5 +1,19 @@
 # zero-svelte
 
+## 2.0.0
+
+### Major Changes
+
+- Upgrade to Zero 1.x (`@rocicorp/zero` ^1.8.0).
+
+  Breaking changes:
+
+  - Requires Zero 1.x — apps must upgrade `@rocicorp/zero` and their `zero-cache` deployment to 1.x.
+  - `z.userID` is now `string | undefined`, matching the underlying Zero client.
+  - `Z`, `Query`, `ViewStore`, and `ViewWrapper` generics are now constrained by `BaseDefaultSchema`/`BaseDefaultContext` instead of `Schema`, mirroring Zero 1.x. Apps registering their schema via `declare module '@rocicorp/zero'` (`DefaultTypes`) get correctly narrowed types throughout.
+
+  Also updates the toolchain (Svelte 5.56, SvelteKit 2.69, Vite 8, ESLint 10). TypeScript is pinned to 6.0.x because svelte-check and typescript-eslint do not yet support the TypeScript 7 native compiler.
+
 ## 1.2.2
 
 ### Patch Changes

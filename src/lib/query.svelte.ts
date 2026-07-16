@@ -1,10 +1,10 @@
 import type {
+	BaseDefaultSchema,
 	CustomMutatorDefs,
 	DefaultSchema,
 	HumanReadable,
 	Query as QueryDef,
-	QueryOrQueryRequest,
-	Schema
+	QueryOrQueryRequest
 } from '@rocicorp/zero';
 import { addContextToQuery, asQueryInternals } from '@rocicorp/zero/bindings';
 import type { ViewWrapper, Z } from './Z.svelte.js';
@@ -14,7 +14,7 @@ export type QueryResult<TReturn> = readonly [HumanReadable<TReturn>, QueryResult
 
 export class Query<
 	TTable extends keyof TSchema['tables'] & string,
-	TSchema extends Schema = DefaultSchema,
+	TSchema extends BaseDefaultSchema = DefaultSchema,
 	TReturn = unknown,
 	MD extends CustomMutatorDefs | undefined = undefined
 > {

@@ -25,7 +25,14 @@ import { Query } from './query.svelte.js';
 import type { QueryResultDetails, ResultType } from './types.js';
 
 export class ViewStore {
-	#views = new SvelteMap<string, unknown>();
+	#views = new SvelteMap<string, { destroy: () => void }>();
+
+	destroy(): void {
+		untrack(() => {
+			for (const view of this.#views.values()) view.destroy();
+			this.#views.clear();
+		});
+	}
 
 	getView<
 		TTable extends keyof TSchema['tables'] & string,
@@ -47,7 +54,14 @@ export class ViewStore {
 			);
 		}
 
-		const hash = asQueryInternals(query).hash();
+		const internals = asQueryInternals(query);
+		// Identical local results do not imply identical server subscriptions. In
+		// particular, a local-only view must never swallow a defined query request.
+		const hash = JSON.stringify([
+			internals.hash(),
+			internals.format,
+			internals.customQueryID ?? null
+		]);
 
 		// Use untrack to prevent state mutations from being tracked during $derived
 		return untrack(() => {
@@ -64,7 +78,9 @@ export class ViewStore {
 						}
 						this.#views.set(hash, view);
 					},
-					() => this.#views.delete(hash),
+					() => {
+						if (this.#views.get(hash) === existing) this.#views.delete(hash);
+					},
 					true
 				);
 				this.#views.set(hash, existing);
@@ -85,6 +101,8 @@ export class ViewWrapper<
 	#data = $state<Entry>({ '': undefined });
 	#status = $state<QueryResultDetails>({ type: 'unknown' });
 	#subscribe: () => void;
+	#removeListener?: () => void;
+	#disposed = false;
 	readonly #refCountMap = new WeakMap<Entry, number>();
 
 	constructor(
@@ -100,12 +118,12 @@ export class ViewWrapper<
 
 		// Create a subscriber that manages view life-cycle
 		this.#subscribe = createSubscriber((notify) => {
+			if (this.#disposed) return;
 			this.#materializeIfNeeded();
 
-			let removeListener: (() => void) | undefined;
 			if (this.#view) {
 				// Listen for updates from the underlying TypedView and notify Svelte
-				removeListener = this.#view.addListener((snap, resultType) => {
+				this.#removeListener = this.#view.addListener((snap, resultType) => {
 					this.#onData(snap as unknown as HumanReadable<TReturn> | undefined, resultType);
 					notify();
 				});
@@ -113,13 +131,26 @@ export class ViewWrapper<
 
 			// Return cleanup function that will only be called
 			// when all effects are destroyed
-			return () => {
-				removeListener?.();
-				this.#view?.destroy();
-				this.#view = undefined;
-				this.onDematerialized();
-			};
+			return () => this.#dematerialize();
 		});
+	}
+
+	#dematerialize(): void {
+		this.#removeListener?.();
+		this.#removeListener = undefined;
+		if (!this.#view) return;
+		this.#view.destroy();
+		this.#view = undefined;
+		this.onDematerialized();
+	}
+
+	// Permanently invalidate views owned by a closed/replaced Zero client.
+	destroy(): void {
+		if (this.#disposed) return;
+		this.#disposed = true;
+		this.#dematerialize();
+		this.#data = { '': asQueryInternals(this.query).format.singular ? undefined : [] };
+		this.#status = { type: 'unknown' };
 	}
 
 	#onData = (
@@ -177,7 +208,8 @@ export class Z<
 	#zero = $state<Zero<TSchema, MD>>(null!);
 	#connectionState = $state<ConnectionState>({ name: 'connecting' });
 	#connectionUnsubscribe?: () => void;
-	#viewStore = new ViewStore();
+	#viewStore = $state.raw(new ViewStore());
+	#closed = false;
 
 	constructor(z_options: ZeroOptions<TSchema, MD>) {
 		this.build(z_options);
@@ -259,15 +291,8 @@ export class Z<
 		query: QueryOrQueryRequest<TTable, TInput, TOutput, TSchema, TReturn, TContext>,
 		enabled: boolean = true
 	): Query<TTable, TSchema, TReturn, MD> {
-		const resolved = addContextToQuery(query, this.context as TContext);
-		return new Query(resolved, this, enabled);
+		return new Query(query, this, enabled);
 	}
-
-	// // Fix createQuery
-	// createQuery(query, enabled = true) {
-	//     const resolved = addContextToQuery(query, this.context);  // use this.context
-	//     return new Query(resolved, this, enabled);
-	// }
 
 	// Alias for createQuery - shorter syntax
 	q<
@@ -339,24 +364,31 @@ export class Z<
 		return this.#zero;
 	}
 
-	build(z_options: ZeroOptions<TSchema, MD>) {
-		// Clean up previous subscription if it exists
-		this.#connectionUnsubscribe?.();
+	build(z_options: ZeroOptions<TSchema, MD>): void {
+		untrack(() => {
+			// Construct first: invalid options must not tear down the working client.
+			const next = new Zero(z_options);
+			if (this.#zero) this.close();
+			this.#zero = next;
+			this.#closed = false;
+			this.#viewStore = new ViewStore();
 
-		// Create new Zero instance
-		this.#zero = new Zero(z_options);
-
-		// Subscribe to connection state changes
-		this.#connectionUnsubscribe = this.#zero.connection.state.subscribe((state) => {
-			this.#connectionState = state;
+			this.#connectionUnsubscribe = next.connection.state.subscribe((state) => {
+				this.#connectionState = state;
+			});
+			this.#connectionState = next.connection.state.current;
 		});
-
-		// Initialize connection state
-		this.#connectionState = this.#zero.connection.state.current;
 	}
 
-	close() {
-		this.#connectionUnsubscribe?.();
-		this.#zero.close();
+	close(): void {
+		untrack(() => {
+			if (this.#closed) return;
+			this.#closed = true;
+			this.#connectionUnsubscribe?.();
+			this.#connectionUnsubscribe = undefined;
+			this.#viewStore.destroy();
+			void this.#zero.close();
+			this.#connectionState = { name: 'closed', reason: 'Zero instance closed by user' };
+		});
 	}
 }

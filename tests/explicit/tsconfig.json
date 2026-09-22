@@ -1,0 +1,5 @@
+{
+	"extends": "../tsconfig.json",
+	"include": ["./public-api.ts"],
+	"exclude": []
+}

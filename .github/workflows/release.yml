@@ -59,6 +59,27 @@ jobs:
       - name: Typecheck/Package
         run: pnpm run check && pnpm run package
 
+      - name: Test published API and compatibility
+        run: pnpm run test && pnpm run test:types && pnpm run test:compat
+
+      - name: Prepare live integration environment
+        run: |
+          docker compose --env-file .env -f docker/docker-compose.yml up -d --wait
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Test real browser and Postgres integration
+        timeout-minutes: 10
+        run: pnpm run test:live
+        env:
+          PUBLIC_SERVER: http://localhost:4848
+          ZERO_UPSTREAM_DB: postgresql://user:password@127.0.0.1:5430/zstart
+          ZERO_QUERY_URL: http://localhost:9370/api/query
+          ZERO_MUTATE_URL: http://localhost:9370/api/mutate
+
+      - name: Stop integration database
+        if: always()
+        run: docker compose --env-file .env -f docker/docker-compose.yml down
+
       - name: Version packages (Changesets)
         run: pnpm changeset version
 

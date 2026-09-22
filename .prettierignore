@@ -7,5 +7,9 @@ yarn.lock
 .changeset/*.md
 CHANGELOG.md
 
+# Browser test artifacts
+/test-results/
+/playwright-report/
+
 # Local tooling
 .claude/

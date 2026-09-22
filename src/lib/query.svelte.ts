@@ -6,7 +6,7 @@ import type {
 	Query as QueryDef,
 	QueryOrQueryRequest
 } from '@rocicorp/zero';
-import { addContextToQuery, asQueryInternals } from '@rocicorp/zero/bindings';
+import { addContextToQuery } from '@rocicorp/zero/bindings';
 import type { ViewWrapper, Z } from './Z.svelte.js';
 import type { QueryResultDetails, ResultType } from './types.js';
 export type { QueryResultDetails, ResultType };
@@ -18,74 +18,94 @@ export class Query<
 	TReturn = unknown,
 	MD extends CustomMutatorDefs | undefined = undefined
 > {
-	#query_impl: QueryDef<TTable, TSchema, TReturn>;
+	#resolveQuery = $state.raw<() => QueryDef<TTable, TSchema, TReturn>>(null!);
 	#z: Z<TSchema, MD>;
-	#view = $state<ViewWrapper<TTable, TSchema, TReturn, MD> | undefined>();
+	#enabled = $state(true);
+	#view = $derived.by(() =>
+		this.#z.viewStore.getView(this.#z, this.#resolveQuery(), this.#enabled)
+	);
 	#cleanup?: () => void;
+	#destroyed = false;
 
 	constructor(
-		query: QueryDef<TTable, TSchema, TReturn>,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		query: QueryOrQueryRequest<TTable, any, any, TSchema, TReturn, any>,
 		z: Z<TSchema, MD>,
 		enabled: boolean = true
 	) {
 		this.#z = z;
-		this.#query_impl = query;
-		this.#view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
+		this.updateQuery(query, enabled);
 
-		// Create a persistent effect that keeps the ViewWrapper subscription alive
-		// This effect reads view.current which activates the subscription
+		try {
+			// Owned effects are disposed on component unmount AND derived replacement.
+			// Keep the inner root explicitly disposable for Query.destroy().
+			$effect(() => this.#start());
+		} catch (error) {
+			// Svelte 5.15 has no public effect-owner check. Preserve standalone queries
+			// (e.g. created in event handlers), whose lifetime is managed by destroy().
+			if (
+				!(error instanceof Error) ||
+				!/^(?:https:\/\/svelte\.dev\/e\/)?effect_(?:orphan|in_unowned_derived)(?:\n|$)/.test(
+					error.message
+				)
+			) {
+				throw error;
+			}
+			this.#start();
+		}
+	}
+
+	#start(): (() => void) | undefined {
+		if (this.#destroyed) return;
 		this.#cleanup = $effect.root(() => {
 			$effect(() => {
-				// Reading current activates and maintains the subscription
-				void this.#view?.current;
+				// Subscribe even when data isn't read: background queries are supported.
+				void this.#view.current;
 			});
 		});
+		return () => this.destroy();
 	}
 
-	get data() {
-		const view = this.#view; // Read $state (tracks dependency on view changes)
-		if (!view) {
-			// Return default based on query format
-			const internals = asQueryInternals(this.#query_impl);
-			return (internals.format.singular ? undefined : []) as unknown as HumanReadable<TReturn>;
-		}
-		// Read state without re-triggering subscription (already activated in constructor)
-		return view.dataOnly;
+	get data(): HumanReadable<TReturn> {
+		return this.#view.dataOnly;
 	}
 
-	get details() {
-		const view = this.#view; // Read $state (tracks dependency on view changes)
-		if (!view) {
-			return { type: 'unknown' } as QueryResultDetails;
-		}
-		// Read state without re-triggering subscription (already activated in constructor)
-		return view.detailsOnly;
+	get details(): QueryResultDetails {
+		return this.#view.detailsOnly;
 	}
 
-	// Keep for backwards compatibility
-	get view() {
+	get view(): ViewWrapper<TTable, TSchema, TReturn, MD> {
 		return this.#view;
 	}
 
-	// Deprecated accessor for backwards compatibility
 	/** @deprecated Use .data instead */
-	get current() {
+	get current(): HumanReadable<TReturn> {
 		return this.data;
 	}
 
-	// Method to update the query - accepts both Query and QueryRequest
 	updateQuery(
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		newQuery: QueryOrQueryRequest<any, any, any, TSchema, TReturn, any>,
 		enabled: boolean = true
-	) {
-		this.#query_impl = addContextToQuery(newQuery, {}) as QueryDef<TTable, TSchema, TReturn>;
-		this.#view = this.#z.viewStore.getView(this.#z, this.#query_impl, enabled);
-		// Setting #view (a $state) will trigger reactivity in components reading .data/.details
+	): void {
+		// Validate synchronously, as before, but retain requests for auth rebuilds.
+		const resolved = addContextToQuery(newQuery, this.#z.context) as QueryDef<
+			TTable,
+			TSchema,
+			TReturn
+		>;
+		const clientID = this.#z.clientID;
+		this.#resolveQuery = () =>
+			this.#z.clientID === clientID
+				? resolved
+				: (addContextToQuery(newQuery, this.#z.context) as QueryDef<TTable, TSchema, TReturn>);
+		this.#enabled = enabled;
 	}
 
-	// Cleanup method to destroy the persistent effect
-	destroy() {
+	destroy(): void {
+		if (this.#destroyed) return;
+		this.#destroyed = true;
 		this.#cleanup?.();
+		this.#cleanup = undefined;
 	}
 }

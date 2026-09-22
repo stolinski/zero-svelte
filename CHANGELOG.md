@@ -1,5 +1,13 @@
 # zero-svelte
 
+## 2.0.1
+
+### Patch Changes
+
+- Fix query cleanup on component unmount and derived replacement while preserving background queries and manual `destroy()` support. Prevent singular/plural view cache collisions and keep local-only queries from suppressing server subscriptions. Preserve context during query updates and client rebuilds, and close/invalidate replaced clients safely. Fix packaged type exports under NodeNext resolution.
+
+  Validate Zero 1.9 and Svelte 5.57 compatibility without raising the supported Zero 1.8 / Svelte 5.15 minimums or removing existing APIs.
+
 ## 2.0.0
 
 ### Major Changes

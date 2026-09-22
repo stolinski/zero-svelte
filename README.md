@@ -300,6 +300,20 @@ For stable query instances that update in place:
 </script>
 ```
 
+### Query lifetime
+
+Queries created during component initialization, inside an owned `$derived`, or inside an effect are cleaned up with that owner. Replacing a derived query releases its previous subscription. Unread background queries remain active until their owner is destroyed.
+
+Queries created outside a Svelte owner (for example, in an event handler or a shared module) keep their existing manual lifetime. Call `destroy()` when finished:
+
+```ts
+const query = z.createQuery(queries.todo.all());
+// ...use query...
+query.destroy();
+```
+
+`z.build(options)` closes the previous client and invalidates its views. Existing queries reconnect to the new client; query requests resolve with the new context, and old results are cleared. `z.close()` releases the client's views. Both query destruction and client closure are safe to call repeatedly.
+
 ## API Reference
 
 ### Z Class
@@ -319,6 +333,7 @@ For stable query instances that update in place:
 - `query.data` - The query results (reactive)
 - `query.details` - Query status details
 - `query.updateQuery(newQuery, enabled?)` - Update the query in place
+- `query.destroy()` - Release a manually managed query
 
 See demo for real working code.
 
@@ -329,7 +344,10 @@ Listen to [Syntax](https://Syntax.fm) for tasty web development treats.
 ## Contributing
 
 - Run `pnpm install` to install dependencies (Node 22+).
-- Run `pnpm run verify` before pushing. It formats, lints, typechecks, builds, and packages.
+- Run `pnpm run verify` before pushing. It checks formatting, lints, typechecks, runs runtime/public-type tests, builds, and packages.
+- Run `pnpm run test:compat` for dependency or library changes. It tests the packed package against Zero 1.8/1.9 and Svelte 5.15/5.57 in isolated consumer projects.
+- Run `pnpm run test:live` with Docker running to test real browser, Postgres, and Zero-cache integration. See [tests/README.md](tests/README.md) for setup and coverage.
+- The supported minimums remain Zero 1.8 and Svelte 5.15; updating the development toolchain does not raise the Svelte peer requirement.
 - If a PR changes published code under `src/lib/**` or `package.json`, run `pnpm changeset` and commit the generated `.changeset/*.md` file.
 - If a PR is docs/CI/dev-only and shouldn't trigger a release, apply the `skip-release` label.
 - CI mirrors this flow and will gate PRs on missing changesets and uncommitted formatting.

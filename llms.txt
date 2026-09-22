@@ -1,7 +1,7 @@
 # Zero Svelte (zero-svelte)
 
 ## What this library is
-- Svelte 5 bindings for @rocicorp/zero (v0.25+), a local-first sync database
+- Svelte 5.15+ bindings for @rocicorp/zero (^1.8.0), a local-first sync database
 - Provides reactive Svelte wrappers so Zero queries automatically update components
 - Main exports:
   - `Z` class: Wraps a Zero instance with Svelte reactivity
@@ -14,10 +14,10 @@
 ## Install
 ```bash
 npm install zero-svelte
-# Peers: Svelte 5+, @rocicorp/zero ^0.25
+# Peer: Svelte ^5.15.0. Runtime dependency: @rocicorp/zero ^1.8.0.
 ```
 
-## Schema Setup (Zero 0.25 pattern)
+## Schema Setup (Zero 1.x)
 
 ```ts
 // schema.ts
@@ -134,7 +134,7 @@ todos.updateQuery(zql.todo.where('completed', '=', true));
 
 ## Query API
 - `query.data` - The reactive query results (array or single object)
-- `query.details` - Status object with `.type`: 'unknown' | 'complete'
+- `query.details` - Status object with `.type`: 'unknown' | 'complete' | 'error'
 - `query.updateQuery(newQuery, enabled?)` - Update query definition in place
 - `query.destroy()` - Clean up subscriptions
 
@@ -154,7 +154,7 @@ z.mutate(mutators.todo.update({ id: '1', completed: true }));
 z.mutate(mutators.todo.delete({ id: '1' }));
 ```
 
-## Connection State (Zero 0.25+)
+## Connection State
 
 Analogous to React's `useConnectionState()` hook:
 
@@ -209,6 +209,10 @@ Analogous to React's `useConnectionState()` hook:
 
 ## Lifecycle
 
+Queries created during component initialization, in an owned `$derived`, or in an effect are cleaned up with that owner. Unread background queries remain active. Queries created outside a Svelte owner (including event handlers) need an explicit `query.destroy()` when finished.
+
+`z.build()` closes the old client and invalidates its views. Existing queries bind to the new client, and query requests resolve with the new context. Both `query.destroy()` and `z.close()` are idempotent.
+
 ```ts
 // Rebuild when auth changes
 z.build({ ...options, auth: newToken });
@@ -219,9 +223,12 @@ z.close();
 
 ## Key Implementation Details
 - Client-only: SSR must be disabled
-- Views are shared by query hash to avoid redundant materialization
+- Views are shared by query hash, result format, AND server query identity, scoped to the current Zero client. Local-only queries never replace server subscriptions.
 - Uses Svelte 5 runes ($state, $derived, $effect) for reactivity
-- Query subscriptions are lazy - only materialize when `.data` is accessed
+- Enabled queries materialize when their subscription effect runs, even if `.data` is never read
+- Query getters remain safe to use inside `$derived`
+- Packed-package compatibility tests cover Zero 1.8/1.9 and Svelte 5.15/5.57
+- `pnpm run test:live` exercises the real Docker/Postgres/Zero/browser stack; see tests/README.md
 
 ## Links
 - Zero docs: https://zero.rocicorp.dev/docs/introduction

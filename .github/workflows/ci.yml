@@ -52,14 +52,26 @@ jobs:
       - name: Check for missing changeset
         id: need_changeset
         if: ${{ steps.changed.outputs.any_changed == 'true' && !contains(join(github.event.pull_request.labels.*.name, ','), 'skip-release') }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
-          echo "Debug: PR labels: ${{ join(github.event.pull_request.labels.*.name, ',') }}"
-          echo "Debug: any_changed=${{ steps.changed.outputs.any_changed }}"
-          if [[ -z "$(ls .changeset | grep -E '\.md$' || true)" ]]; then
-            echo "missing=true" >> "$GITHUB_OUTPUT"
+          missing=true
+          if [[ -n "$(ls .changeset | grep -E '\.md$' || true)" ]]; then
+            missing=false
           else
-            echo "missing=false" >> "$GITHUB_OUTPUT"
+            # Applying Changesets consumes the .md file. Accept the resulting
+            # version change only when its changelog heading was also added.
+            base="$BASE_SHA"
+            if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+              base=$(git merge-base HEAD origin/main)
+            fi
+            version=$(node -p "require('./package.json').version")
+            previous=$(git show "$base:package.json" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+            if [[ "$version" != "$previous" ]] && git diff "$base" -- CHANGELOG.md | grep -Fx -- "+## $version" > /dev/null; then
+              missing=false
+            fi
           fi
+          echo "missing=$missing" >> "$GITHUB_OUTPUT"
 
       - name: Comment with instructions
         if: ${{ steps.need_changeset.outputs.missing == 'true' }}
@@ -68,11 +80,11 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            It looks like this PR changes publishable code but does not include a Changeset.
+            This PR changes publishable code but has neither a pending Changeset nor an applied version/changelog update.
 
             To fix:
             1. Run `pnpm changeset` locally and choose patch/minor/major.
-            2. Commit the generated `.changeset/*.md` file to this PR.
+            2. Commit the generated `.changeset/*.md` file, or apply it with `pnpm changeset version` and commit the version/changelog update.
 
             If this PR does not require a release (docs/CI/dev-only), add the `skip-release` label.
 
@@ -81,11 +93,11 @@ jobs:
         run: |
           echo "❌ Missing changeset"
           echo ""
-          echo "This PR changes publishable code but does not include a Changeset."
+          echo "This PR needs a pending Changeset or an applied version/changelog update."
           echo ""
           echo "To fix:"
           echo "  1. Run 'pnpm changeset' locally and choose patch/minor/major"
-          echo "  2. Commit the generated .changeset/*.md file to this PR"
+          echo "  2. Commit the .changeset/*.md file, or apply it and commit the version/changelog update"
           echo ""
           echo "If this PR does not require a release (docs/CI/dev-only), add the 'skip-release' label."
           exit 1
@@ -98,6 +110,57 @@ jobs:
       - name: Sync SvelteKit types
         run: pnpm run sync
 
+      - run: pnpm run lint
       - run: pnpm run check
+      - run: pnpm run test
+      - run: pnpm run test:types
       - run: pnpm run build
       - run: pnpm run package
+
+  compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        zero: ['1.8.0', '1.9.0']
+        svelte: ['5.15.0', '5.57.1']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run sync
+      - run: pnpm run test:compat
+        env:
+          TEST_ZERO: ${{ matrix.zero }}
+          TEST_SVELTE: ${{ matrix.svelte }}
+
+  live-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: cp .env.example .env
+      - run: docker compose --env-file .env -f docker/docker-compose.yml up -d --wait
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run test:live
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-browser-results
+          path: test-results/
+      - run: docker compose --env-file .env -f docker/docker-compose.yml down
+        if: always()

@@ -5,7 +5,11 @@
 - `pnpm run check` - TypeScript/Svelte type checking
 - `pnpm run lint` - ESLint
 - `pnpm run format` - Prettier formatting
-- `pnpm run verify` - Full CI check (format + lint + check + build + package)
+- `pnpm run test` - Runtime regressions against the packaged library
+- `pnpm run test:types` - Consumer TypeScript compatibility (requires fresh `dist/`)
+- `pnpm run test:compat` - Packed-library Zero/Svelte compatibility matrix
+- `pnpm run test:live` - Real browser + Docker/Postgres/Zero tests (see `tests/README.md`)
+- `pnpm run verify` - Format + lint + check + runtime/type tests + build + package
 - `pnpm run dev` - Start dev server
 - `pnpm run dev:zero-cache` - Run Zero cache server
 
